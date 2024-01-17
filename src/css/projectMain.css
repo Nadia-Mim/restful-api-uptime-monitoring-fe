@@ -1,0 +1,16 @@
+@import url("./buttons.css");
+
+.inputWrapper{
+    position: relative;
+    border-bottom: 2px solid #35363e;
+    margin: 30px 0;
+}
+.inputWrapper input{
+    width: 100%;
+    padding: 0 5px;
+    height: 40px;
+    font-size: 16px;
+    border: none;
+    background: none;
+    outline: none;
+}
