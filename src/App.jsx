@@ -13,7 +13,7 @@ function App() {
 
     return (
         <HashRouter>
-            {/* <Navbar /> */}
+            <Navbar />
             <Routes>
                 <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
                 <Route exact path='/login' name="login" element={<Login />} />
