@@ -1,5 +1,6 @@
 @import url("./buttons.css");
 @import url("./navbar.css");
+@import url("./scrollbar.css");
 
 .inputWrapper{
     position: relative;

@@ -11,21 +11,17 @@ const Login = React.lazy(() => import('../src/components/login/Login'));
 const Dashboard = React.lazy(() => import('../src/components/apiMonitoring/Dashboard'));
 
 function App() {
-
     return (
         <HashRouter>
             <Navbar />
-            <Routes>
-                <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
-                <Route exact path='/login' name="login" element={<Login />} />
+            <div className="main-content">
+                <Routes>
+                    <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
+                    <Route exact path='/login' name="login" element={<Login />} />
 
-                <Route path="/*"
-                    element={
-                        <Navigate to='/dashboard' />
-                    }
-                />
-
-            </Routes>
+                    <Route path="/*" element={<Navigate to='/dashboard' />} />
+                </Routes>
+            </div>
         </HashRouter>
     )
 }

@@ -42,6 +42,7 @@ const styles = {
         borderRadius: "5px",
         padding: "8px",
         width: "100%",
+        background: '#1E1F26'
     },
     searchIcon: {
         position: "absolute",
@@ -129,74 +130,74 @@ const Dashboard = () => {
             </div>
 
 
-<div>
-            {arr?.map(eachCard => {
-                return (
-                    <div style={styles.apiDetailsCard}>
-                        <div>
-                            {/* Progress */}
+            <div>
+                {arr?.map(eachCard => {
+                    return (
+                        <div style={styles.apiDetailsCard}>
                             <div>
-                                <div>Connectivity</div>
-                            </div>
-
-                            <div style={styles.flexBetween}>
+                                {/* Progress */}
                                 <div>
-                                    {arr?.map(item => {
-                                        return <img src={RightAlignedProgressParrot} style={{ height: '50px', width: '35px' }} />
-                                    })}
+                                    <div>Connectivity</div>
                                 </div>
 
-                                <div>
-                                    <CustomToggleSwitch
-                                        // isChecked={true}
-                                        origin={`api-state`}
-                                        disabled={false}
-                                        actionOnChange={() => handleStateChange()}
-                                    />
-                                </div>
-                            </div>
-
-
-                            <div style={{ ...styles.flexBetween, marginBottom: '10px' }}>
-                                <div>
-                                    <div style={styles.smallText}>URL</div>
-                                    <div>google.com</div>
-                                </div>
-
-                                <div>
-                                    <div style={styles.smallText}>State</div>
+                                <div style={styles.flexBetween}>
                                     <div>
-                                        <span style={badgeColors['DOWN']}>DOWN</span>
+                                        {arr?.map(item => {
+                                            return <img src={RightAlignedProgressParrot} style={{ height: '50px', width: '35px' }} />
+                                        })}
+                                    </div>
+
+                                    <div>
+                                        <CustomToggleSwitch
+                                            // isChecked={true}
+                                            origin={`api-state`}
+                                            disabled={false}
+                                            actionOnChange={() => handleStateChange()}
+                                        />
                                     </div>
                                 </div>
 
-                                <div>
-                                    <div style={styles.smallText}>Protocol</div>
-                                    <div>http</div>
-                                </div>
 
-                                <div>
-                                    <div style={styles.smallText}>Method</div>
-                                    <div>POST</div>
-                                </div>
+                                <div style={{ ...styles.flexBetween, marginBottom: '10px' }}>
+                                    <div>
+                                        <div style={styles.smallText}>URL</div>
+                                        <div>google.com</div>
+                                    </div>
 
-                                <div>
-                                    <div style={styles.smallText}>Status Codes</div>
-                                    <div>200, 201</div>
-                                </div>
+                                    <div>
+                                        <div style={styles.smallText}>State</div>
+                                        <div>
+                                            <span style={badgeColors['DOWN']}>DOWN</span>
+                                        </div>
+                                    </div>
 
-                                <div>
-                                    <div style={styles.smallText}>Action</div>
-                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                        <img src={EditIcon} style={{ cursor: 'pointer' }} alt='EditIcon' />
-                                        <img src={DeleteIcon} style={{ cursor: 'pointer' }} alt='DeleteIcon' />
+                                    <div>
+                                        <div style={styles.smallText}>Protocol</div>
+                                        <div>http</div>
+                                    </div>
+
+                                    <div>
+                                        <div style={styles.smallText}>Method</div>
+                                        <div>POST</div>
+                                    </div>
+
+                                    <div>
+                                        <div style={styles.smallText}>Status Codes</div>
+                                        <div>200, 201</div>
+                                    </div>
+
+                                    <div>
+                                        <div style={styles.smallText}>Action</div>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <img src={EditIcon} style={{ cursor: 'pointer' }} alt='EditIcon' />
+                                            <img src={DeleteIcon} style={{ cursor: 'pointer' }} alt='DeleteIcon' />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )
-            })}
+                    )
+                })}
             </div>
         </div>
     )

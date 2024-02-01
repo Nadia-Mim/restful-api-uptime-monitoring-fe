@@ -1,29 +1,59 @@
-.navbar {
-    position: absolute;
-    width: 80px;
-    min-height: 100vh;
-    background: linear-gradient(45deg, #2196f3, #e91e63);
+.nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #1E1F26;
 }
 
-.navbar ul{
+.left-nav {
+    position: absolute;
+    width: 80px;
+    height: 100vh;
+    background: #1E1F26;
+    position: fixed;
+}
+
+.left-nav ul {
     margin-left: 0;
     padding-left: 0;
 }
 
-.navbar ul li {
+.left-nav ul li {
     list-style: none;
     margin: 40px 0;
 }
 
-.navbar ul li nav .icon {
+.left-nav ul li nav .icon {
     position: relative;
     width: 80px;
     display: block;
-    transition: 0.5s;
+    transition: 0.3s;
     display: flex;
     justify-content: center;
 }
 
-.navbar ul li:hover nav .icon {
+.left-nav ul li:hover nav .icon {
     transform: scale(0.8);
 }
+
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    background: #1E1F26;
+    /* border-bottom: 1px solid white; */
+    box-shadow: 0 4px 8px rgba(74, 75, 81, 0.5);
+    height: 70px;
+    margin-bottom: 5px;
+}
+
+/* .circle {
+    display: flex;
+    margin-left: 17px;
+    margin-top: -38px;
+    height: 40px;
+    width: 40px;
+    border: 4px solid red;
+    border-radius: 50%;
+} */
