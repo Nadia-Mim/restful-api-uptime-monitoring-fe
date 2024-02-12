@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import SearchIcon from '../../icons/SearchIcon.svg'
 import RightAlignedProgressParrot from '../../icons/RightAlignedProgressParrot.svg'
 import EditIcon from '../../icons/EditIcon.svg'
 import DeleteIcon from '../../icons/DeleteIcon.svg'
 import CustomToggleSwitch from '../common/customSwitch/CustomToggleSwitch'
+import AddNewApiModal from './AddNewApiModal'
 
 
 const styles = {
@@ -16,11 +17,13 @@ const styles = {
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: '5px',
+        boxShadow: '0px 4px 1rem #000'
     },
     apiDetailsCard: {
         background: '#1E1F26',
         padding: '15px 20px',
-        marginBottom: '20px'
+        marginBottom: '20px',
+        boxShadow: '0px 4px 1rem #000'
     },
     largeText: {
         fontSize: '35px',
@@ -78,12 +81,23 @@ let arr = [1, 2, 3, 4, 5, 6]
 
 const Dashboard = () => {
 
+    const [addNewApiModalVisualize, setAddNewApiModalVisualize] = useState(false);
+
+
     const handleStateChange = () => {
 
     }
 
     return (
         <div>
+
+            {addNewApiModalVisualize &&
+                <AddNewApiModal
+                    addNewApiModalVisualize={addNewApiModalVisualize}
+                    setAddNewApiModalVisualize={setAddNewApiModalVisualize}
+                />
+            }
+
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                 <div style={styles.cardStyle}>
                     <div style={styles.smallText}>Total API Count</div>
@@ -112,7 +126,12 @@ const Dashboard = () => {
             </div>
 
             <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', paddingRight: '15px' }}>
-                <div style={styles.blueButton}>+ Create New API</div>
+                <div
+                    style={styles.blueButton}
+                    onClick={() => setAddNewApiModalVisualize(true)}
+                >
+                    + Create New API
+                </div>
 
                 <div style={{ position: "relative" }}>
                     <input
@@ -131,9 +150,9 @@ const Dashboard = () => {
 
 
             <div>
-                {arr?.map(eachCard => {
+                {arr?.map((apiDetails, index) => {
                     return (
-                        <div style={styles.apiDetailsCard}>
+                        <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
                             <div>
                                 {/* Progress */}
                                 <div>
@@ -142,8 +161,8 @@ const Dashboard = () => {
 
                                 <div style={styles.flexBetween}>
                                     <div>
-                                        {arr?.map(item => {
-                                            return <img src={RightAlignedProgressParrot} style={{ height: '50px', width: '35px' }} />
+                                        {arr?.map((item, index) => {
+                                            return <img src={RightAlignedProgressParrot} style={{ height: '50px', width: '35px' }} key={`progress-${index}`} />
                                         })}
                                     </div>
 

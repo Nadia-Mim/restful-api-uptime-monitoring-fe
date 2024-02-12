@@ -1,7 +1,7 @@
 import React from 'react';
 import Gear from '../../icons/Gear.svg';
 import User from '../../icons/User.svg';
-
+import Systech from '../../images/Systech.png'
 
 const Navbar = () => {
     return (
@@ -9,7 +9,7 @@ const Navbar = () => {
         <div className='nav'>
             <div className='top-nav'>
                 <div>
-                    <h3>LOGO</h3>
+                    <img src={Systech} style={{ height: '75px', width: '75px' }} />
                 </div>
                 <div>
                     <h3>Log Out</h3>
