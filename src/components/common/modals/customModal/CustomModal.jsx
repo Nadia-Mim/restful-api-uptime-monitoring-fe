@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import '../customModal/CustomModal.css';
-import Close from '../../icons/Cross.svg';
+import './CustomModal.css';
+import Close from '../../../../icons/Cross.svg';
 
 export const CustomModal = (props) => {
 

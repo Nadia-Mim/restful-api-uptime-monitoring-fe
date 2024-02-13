@@ -1,6 +1,8 @@
-import React from 'react'
-import { CustomModal, CustomModalBody, CustomModalHeader } from '../../utils/customModal/CustomModal'
+import { useFormik } from "formik";
+import React from 'react';
 import Select from "react-select";
+import * as Yup from "yup";
+import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
 
 const styles = {
     largeText: {
@@ -33,7 +35,8 @@ const styles = {
         background: '#1E1F26',
         padding: "8px",
         fontSize: '17px',
-        fontWeight: 300
+        fontWeight: 300,
+        color: '#fff'
     },
     selectStyle: {
         control: (styles) => ({
@@ -129,7 +132,22 @@ const statusCodeOptions = [
     { label: '511 - Network Authentication Required', value: '511' }
 ];
 
+const initialValues = {
+
+}
+
 const AddNewApiModal = (props) => {
+
+    const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
+        initialValues: initialValues,
+        validationSchema: Yup.object().shape({
+
+        }),
+        onSubmit: (value) => {
+
+        },
+    });
+
     return (
         <div>
             <CustomModal visible={props?.addNewApiModalVisualize} style={{ maxWidth: '600px' }}>
@@ -171,7 +189,7 @@ const AddNewApiModal = (props) => {
                                 // value={allNumber.filter(item => item.id === simId)}
                                 menuPortalTarget={document.body}
                                 menuPlacement="auto"
-                                placeholder={'Select Protocol'}
+                                placeholder={'Select Method'}
                                 styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                             />
                         </div>

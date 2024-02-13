@@ -5,6 +5,7 @@ import EditIcon from '../../icons/EditIcon.svg'
 import DeleteIcon from '../../icons/DeleteIcon.svg'
 import CustomToggleSwitch from '../common/customSwitch/CustomToggleSwitch'
 import AddNewApiModal from './AddNewApiModal'
+import Select from "react-select";
 
 
 const styles = {
@@ -36,7 +37,7 @@ const styles = {
     blueButton: {
         background: '#4545E6',
         width: '150px',
-        padding: '10px',
+        padding: '8px',
         cursor: 'pointer',
         borderRadius: '5px'
     },
@@ -45,7 +46,8 @@ const styles = {
         borderRadius: "5px",
         padding: "8px",
         width: "100%",
-        background: '#1E1F26'
+        background: '#1E1F26',
+        color: '#fff'
     },
     searchIcon: {
         position: "absolute",
@@ -56,6 +58,27 @@ const styles = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+    },
+    selectStyle: {
+        control: (styles) => ({
+            ...styles,
+            backgroundColor: '#1E1F26',
+            borderColor: "rgba(130, 141, 153, 0.5)",
+            color: '#FFFFFF',
+        }),
+        option: (styles, { isFocused, isSelected }) => ({
+            ...styles,
+            backgroundColor: isSelected ? '#4545E6' : '#1E1F26',
+            color: isSelected ? '#FFFFFF' : '#FFFFFF',
+            ':hover': {
+                backgroundColor: isFocused ? '#45464D' : '#1E1F26',
+            },
+        }),
+        singleValue: (provided) => ({
+            ...provided,
+            color: 'white',
+            fontWeight: 300
+        }),
     }
 }
 
@@ -76,12 +99,19 @@ const badgeColors = {
     }
 }
 
+const checkStateOptions = [
+    { label: 'All', value: 'All' },
+    { label: 'Active', value: 'Active' },
+    { label: 'Inactive', value: 'Inactive' }
+]
+
 let arr = [1, 2, 3, 4, 5, 6]
 
 
 const Dashboard = () => {
 
     const [addNewApiModalVisualize, setAddNewApiModalVisualize] = useState(false);
+    const [selectedState, setSelectedState] = useState('Active');
 
 
     const handleStateChange = () => {
@@ -126,12 +156,27 @@ const Dashboard = () => {
             </div>
 
             <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', paddingRight: '15px' }}>
-                <div
-                    style={styles.blueButton}
-                    onClick={() => setAddNewApiModalVisualize(true)}
-                >
-                    + Create New API
+                <div style={{ display: 'flex', gap: '15px' }}>
+                    <div
+                        style={styles.blueButton}
+                        onClick={() => setAddNewApiModalVisualize(true)}
+                    >
+                        + Create New API
+                    </div>
+
+                    <div style={{width: '200px'}}>
+                        <Select
+                            onChange={(e) => setSelectedState(e.value)}
+                            options={checkStateOptions}
+                            value={checkStateOptions?.filter(option => option?.value === selectedState)}
+                            menuPortalTarget={document.body}
+                            menuPlacement="auto"
+                            placeholder={'Select State'}
+                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                        />
+                    </div>
                 </div>
+
 
                 <div style={{ position: "relative" }}>
                     <input
