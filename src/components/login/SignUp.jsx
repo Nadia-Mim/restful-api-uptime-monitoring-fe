@@ -3,6 +3,7 @@ import React from 'react';
 import * as Yup from "yup";
 import LoginBackground from '../../images/LoginBackground.jpg';
 import { CreateUser } from "../../api/user/POST";
+import { useNavigate } from 'react-router-dom';
 
 const styles = {
     backgroundStyle: {
@@ -70,6 +71,8 @@ const initialValues = {
 
 const SignUp = () => {
 
+    const navigate = useNavigate(); // To route to another page
+
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
         initialValues: initialValues,
         validationSchema: Yup.object().shape({
@@ -78,11 +81,15 @@ const SignUp = () => {
         onSubmit: (value) => {
             CreateUser(values).then(response => {
                 if (response?.[0]) {
-                    debugger
+                    routeToLogin();
                 }
             })
         },
     });
+
+    const routeToLogin = () => {
+        navigate('/login');
+    }
 
 
     return (

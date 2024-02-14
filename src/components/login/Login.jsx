@@ -1,5 +1,7 @@
+import { useFormik } from "formik";
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as Yup from "yup";
 import LoginBackground from '../../images/LoginBackground.jpg';
 
 const styles = {
@@ -56,15 +58,29 @@ const styles = {
         outline: 'none'
     }
 }
+
+
 const Login = () => {
 
     const navigate = useNavigate(); // To route to another page
 
-    const [selectedForm, setSelectedForm] = useState('LOGIN');
-
     useEffect(() => {
 
     }, [])
+
+    const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
+        initialValues: initialValues,
+        validationSchema: Yup.object().shape({
+
+        }),
+        onSubmit: (value) => {
+            CreateUser(values).then(response => {
+                if (response?.[0]) {
+                    routeToLogin();
+                }
+            })
+        },
+    });
 
     const routeToSignUp = () => {
         navigate('/sign-up');

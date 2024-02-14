@@ -24,7 +24,7 @@ export const CreateUser = (userInfo) => {
                 // 'Authorization': 'Bearer ' + token
             }
         }).then(response => {
-            return ([...response?.data]);
+            return ([response?.data]);
         }).catch(error => {
             return handleError(error);
         })

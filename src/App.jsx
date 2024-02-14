@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
-// import './App.css';
+import './App.css';
 import './css/projectMain.css'
 
 // Navbar
@@ -21,14 +21,16 @@ function App() {
 
             {showNavbar && <Navbar />}
 
-            <div className="main-content">
-                <Routes>
-                    <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
-                    <Route exact path='/login' name="login" element={<Login setShowNavbar={setShowNavbar} />} />
-                    <Route exact path='/sign-up' name="SignUp" element={<SignUp />} />
+            <div className={showNavbar ? "main-content" : ''}>
+                <React.Suspense>
+                    <Routes>
+                        <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
+                        <Route exact path='/login' name="login" element={<Login setShowNavbar={setShowNavbar} />} />
+                        <Route exact path='/sign-up' name="SignUp" element={<SignUp />} />
 
-                    <Route path="/*" element={<Navigate to='/login' />} />
-                </Routes>
+                        <Route path="/*" element={<Navigate to='/login' />} />
+                    </Routes>
+                </React.Suspense>
             </div>
         </HashRouter>
     )
