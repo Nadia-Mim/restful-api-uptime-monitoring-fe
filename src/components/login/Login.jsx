@@ -1,7 +1,8 @@
 import { useFormik } from "formik";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Yup from "yup";
+import { crateTokenToLoginUser } from "../../api/token/POST";
 import LoginBackground from '../../images/LoginBackground.jpg';
 
 const styles = {
@@ -59,13 +60,23 @@ const styles = {
     }
 }
 
+const initialValues = {
+    userName: "",
+    password: ""
+}
+
 
 const Login = () => {
 
     const navigate = useNavigate(); // To route to another page
 
     useEffect(() => {
-
+        // If there is existing authentication stored in local storage and expiry is not exceeded then 
+        // go to dashboard directly.
+        let authData = JSON.parse(localStorage.getItem('authData'));
+        if (authData && authData?.expires > Date.now()) {
+            routeToDashboard();
+        }
     }, [])
 
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
@@ -74,13 +85,18 @@ const Login = () => {
 
         }),
         onSubmit: (value) => {
-            CreateUser(values).then(response => {
+            crateTokenToLoginUser(values).then(response => {
                 if (response?.[0]) {
-                    routeToLogin();
+                    localStorage.setItem("authData", JSON.stringify(response?.[0]));
+                    routeToDashboard();
                 }
             })
         },
     });
+
+    const routeToDashboard = () => {
+        navigate('/dashboard');
+    }
 
     const routeToSignUp = () => {
         navigate('/sign-up');
@@ -96,10 +112,12 @@ const Login = () => {
                     <div style={{ marginBottom: "3.5rem" }}>
                         <div style={styles.inputWrapper}>
                             <input
-                                placeholder='Email'
+                                placeholder='Username'
                                 type="email"
                                 id="inputEmail4"
                                 style={styles.input}
+                                value={values?.userName}
+                                onChange={(e) => setValues({ ...values, userName: e.target.value })}
                             />
                         </div>
                         <div style={styles.inputWrapper}>
@@ -108,11 +126,13 @@ const Login = () => {
                                 type="password"
                                 id="inputPassword4"
                                 style={styles.input}
+                                value={values?.password}
+                                onChange={(e) => setValues({ ...values, password: e.target.value })}
                             />
                         </div>
                     </div>
                     <div>
-                        <div style={styles.submitButton}>Sign In</div>
+                        <div style={styles.submitButton} onClick={handleSubmit}>Sign In</div>
                         <div>
                             {/* <div style={styles.signUpText}>Forgot Password?</div> */}
                             <span

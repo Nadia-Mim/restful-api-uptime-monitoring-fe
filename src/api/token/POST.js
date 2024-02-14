@@ -15,9 +15,9 @@ const handleError = (error) => {
     }
 }
 
-export const CreateUser = (userInfo) => {
+export const crateTokenToLoginUser = (loginInfo) => {
     return (
-        axios.post(`${Server.baseApi}/user`, userInfo, {
+        axios.post(`${Server.baseApi}/token`, loginInfo, {
             headers: {
                 'Content-Type': "application/json",
             }

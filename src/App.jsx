@@ -14,18 +14,18 @@ const Dashboard = React.lazy(() => import('../src/components/apiMonitoring/Dashb
 
 function App() {
 
-    const [showNavbar, setShowNavbar] = useState(false);
+    const authData = localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')) : '';
 
     return (
         <HashRouter>
 
-            {showNavbar && <Navbar />}
+            {authData && <Navbar />}
 
-            <div className={showNavbar ? "main-content" : ''}>
+            <div className={authData ? "main-content" : ''}>
                 <React.Suspense>
                     <Routes>
                         <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
-                        <Route exact path='/login' name="login" element={<Login setShowNavbar={setShowNavbar} />} />
+                        <Route exact path='/login' name="login" element={<Login />} />
                         <Route exact path='/sign-up' name="SignUp" element={<SignUp />} />
 
                         <Route path="/*" element={<Navigate to='/login' />} />
