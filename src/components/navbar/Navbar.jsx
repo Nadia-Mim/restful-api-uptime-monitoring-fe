@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Gear from '../../icons/Gear.svg';
 import User from '../../icons/User.svg';
 import Systech from '../../images/Systech.png';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from '../../contexts/AuthContext';
 
 const Navbar = () => {
 
+    const authContextConsumer = useContext(AuthContext);
     const navigate = useNavigate(); // To route to another page
 
     const handleLogout = () => {
         localStorage.removeItem("authData");
+        authContextConsumer.setAuthData('');
         navigate('/login');
     }
 

@@ -1,38 +1,30 @@
-import React, { useState } from 'react';
-import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
 import './App.css';
-import './css/projectMain.css'
-
-// Navbar
-import Navbar from '../src/components/navbar/Navbar';
-
-// Login Components
-const Login = React.lazy(() => import('../src/components/login/Login'));
-const SignUp = React.lazy(() => import('../src/components/login/SignUp'));
-const Dashboard = React.lazy(() => import('../src/components/apiMonitoring/Dashboard'));
+import './css/projectMain.css';
+import Routes from './routes';
+import { AuthDetailsProvider } from './contexts/AuthContext';
 
 
 function App() {
 
-    const authData = localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')) : '';
+    const [authData, setAuthData] = useState('');
+
+    useEffect(() => {
+        const storedAuthData = localStorage.getItem('authData');
+        if (storedAuthData) {
+            setAuthData(JSON.parse(storedAuthData));
+        }
+    }, []);
 
     return (
-        <HashRouter>
-
-            {authData && <Navbar />}
-
-            <div className={authData ? "main-content" : ''}>
-                <React.Suspense>
-                    <Routes>
-                        <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
-                        <Route exact path='/login' name="login" element={<Login />} />
-                        <Route exact path='/sign-up' name="SignUp" element={<SignUp />} />
-
-                        <Route path="/*" element={<Navigate to='/login' />} />
-                    </Routes>
-                </React.Suspense>
-            </div>
-        </HashRouter>
+        <AuthDetailsProvider
+            value={{
+                authData,
+                setAuthData
+            }}
+        >
+            <Routes />
+        </AuthDetailsProvider>
     )
 }
 

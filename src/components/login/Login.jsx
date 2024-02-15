@@ -1,9 +1,10 @@
 import { useFormik } from "formik";
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Yup from "yup";
 import { crateTokenToLoginUser } from "../../api/token/POST";
 import LoginBackground from '../../images/LoginBackground.jpg';
+import AuthContext from "../../contexts/AuthContext";
 
 const styles = {
     backgroundStyle: {
@@ -68,6 +69,7 @@ const initialValues = {
 
 const Login = () => {
 
+    const authContextConsumer = useContext(AuthContext);
     const navigate = useNavigate(); // To route to another page
 
     useEffect(() => {
@@ -88,6 +90,7 @@ const Login = () => {
             crateTokenToLoginUser(values).then(response => {
                 if (response?.[0]) {
                     localStorage.setItem("authData", JSON.stringify(response?.[0]));
+                    authContextConsumer.setAuthData(response?.[0]);
                     routeToDashboard();
                 }
             })
