@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import SearchIcon from '../../icons/SearchIcon.svg'
 import RightAlignedProgressParrot from '../../icons/RightAlignedProgressParrot.svg'
 import EditIcon from '../../icons/EditIcon.svg'
@@ -6,6 +6,7 @@ import DeleteIcon from '../../icons/DeleteIcon.svg'
 import CustomToggleSwitch from '../common/customSwitch/CustomToggleSwitch'
 import AddNewApiModal from './AddNewApiModal'
 import Select from "react-select";
+import { getAllChecks } from '../../api/apiChecks/GET'
 
 
 const styles = {
@@ -110,8 +111,36 @@ let arr = [1, 2, 3, 4, 5, 6]
 
 const Dashboard = () => {
 
+    const [allApiChecks, setAllApiChecks] = useState([]);
+    const [filteredApiChecks, setFilteredApiChecks] = useState([])
     const [addNewApiModalVisualize, setAddNewApiModalVisualize] = useState(false);
     const [selectedState, setSelectedState] = useState('Active');
+
+
+    useEffect(() => {
+        getAllChecks().then(response => {
+            if (response?.[0]) {
+                setAllApiChecks(response?.[0]);
+                setFilteredApiChecks(response?.[0]);
+            } else {
+                setAllApiChecks([]);
+                setFilteredApiChecks([]);
+            }
+        });
+
+
+        setInterval(() => {
+            getAllChecks().then(response => {
+                if (response?.[0]) {
+                    setAllApiChecks(response?.[0]);
+                    setFilteredApiChecks(response?.[0]);
+                } else {
+                    setAllApiChecks([]);
+                    setFilteredApiChecks([]);
+                }
+            });
+        }, 1000 * 60)
+    }, [])
 
 
     const handleStateChange = () => {
@@ -164,7 +193,7 @@ const Dashboard = () => {
                         + Create New API
                     </div>
 
-                    <div style={{width: '200px'}}>
+                    <div style={{ width: '200px' }}>
                         <Select
                             onChange={(e) => setSelectedState(e.value)}
                             options={checkStateOptions}
@@ -195,7 +224,7 @@ const Dashboard = () => {
 
 
             <div>
-                {arr?.map((apiDetails, index) => {
+                {filteredApiChecks?.map((apiCheckDetails, index) => {
                     return (
                         <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
                             <div>
@@ -225,29 +254,29 @@ const Dashboard = () => {
                                 <div style={{ ...styles.flexBetween, marginBottom: '10px' }}>
                                     <div>
                                         <div style={styles.smallText}>URL</div>
-                                        <div>google.com</div>
+                                        <div>{apiCheckDetails?.url}</div>
                                     </div>
 
                                     <div>
                                         <div style={styles.smallText}>State</div>
                                         <div>
-                                            <span style={badgeColors['DOWN']}>DOWN</span>
+                                            <span style={badgeColors[apiCheckDetails?.state]}>{apiCheckDetails?.state}</span>
                                         </div>
                                     </div>
 
                                     <div>
                                         <div style={styles.smallText}>Protocol</div>
-                                        <div>http</div>
+                                        <div>{apiCheckDetails?.protocol}</div>
                                     </div>
 
                                     <div>
                                         <div style={styles.smallText}>Method</div>
-                                        <div>POST</div>
+                                        <div>{apiCheckDetails?.method}</div>
                                     </div>
 
                                     <div>
-                                        <div style={styles.smallText}>Status Codes</div>
-                                        <div>200, 201</div>
+                                        <div style={styles.smallText}>Success Codes</div>
+                                        <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
                                     </div>
 
                                     <div>

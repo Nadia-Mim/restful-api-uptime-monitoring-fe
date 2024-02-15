@@ -1,8 +1,11 @@
 import { useFormik } from "formik";
-import React from 'react';
+import React, { useEffect } from 'react';
 import Select from "react-select";
 import * as Yup from "yup";
+import CircularAddIcon from '../../icons/CircularAddIcon.svg';
+import CircularMinusIcon from '../../icons/CircularMinusIcon.svg';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
+import { addNewChecks } from "../../api/apiChecks/POST";
 
 const styles = {
     largeText: {
@@ -68,9 +71,9 @@ const protocolOptions = [
 
 const methodOptions = [
     { label: 'GET', value: 'GET' },
-    { label: 'POST', value: 'http' },
+    { label: 'POST', value: 'POST' },
     { label: 'PUT', value: 'PUT' },
-    { label: 'DELETE', value: 'http' }
+    { label: 'DELETE', value: 'POST' }
 ]
 
 const statusCodeOptions = [
@@ -132,94 +135,184 @@ const statusCodeOptions = [
     { label: '511 - Network Authentication Required', value: '511' }
 ];
 
-const initialValues = {
-
+const checkSampleData = {
+    protocol: '',
+    url: '',
+    method: '',
+    successCodes: [],
+    timeoutSeconds: 1
 }
 
 const AddNewApiModal = (props) => {
 
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
-        initialValues: initialValues,
+        initialValues: {},
         validationSchema: Yup.object().shape({
 
         }),
         onSubmit: (value) => {
-
+            addNewChecks(values).then(response => {
+                if(response?.[0]){
+                    debugger
+                }
+            });
         },
     });
+
+    useEffect(() => {
+        setValues({
+            checks: [{ ...checkSampleData }]
+        });
+    }, [])
+
+    const addMoreApiCheck = () => {
+        setValues({
+            checks: [
+                ...values?.checks,
+                { ...checkSampleData }
+            ]
+        });
+    }
+
+    const removeCheck = (index) => {
+        let checkData = values?.checks;
+        checkData.splice(index, 1);
+        setValues({
+            checks: [...checkData]
+        });
+    }
+
+    const handleCheckInput = (fieldName, value, index) => {
+        let checkData = values?.checks;
+
+        checkData[index] = {
+            ...checkData?.[index],
+            [fieldName]: value
+        }
+
+        setValues({
+            checks: [...checkData]
+        });
+    }
+
+    const handleSuccessCodeMultiSelect = (selectedOptions, index) => {
+        let statusCodes = selectedOptions?.map(selectedOption => selectedOption?.value);
+
+        let checkData = values?.checks;
+        checkData[index]['successCodes'] = statusCodes;
+
+        setValues({
+            checks: [...checkData]
+        });
+    }
 
     return (
         <div>
             <CustomModal visible={props?.addNewApiModalVisualize} style={{ maxWidth: '600px' }}>
-                <CustomModalHeader onClose={() => props.setAddNewApiModalVisualize(false)}>Add New Check</CustomModalHeader>
+                <CustomModalHeader onClose={() => props.setAddNewApiModalVisualize(false)}>Add New API Checks</CustomModalHeader>
                 <CustomModalBody style={{ padding: '15px 5%' }}>
-                    <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText}>URL Path</div>
-                        <div>
-                            <input placeholder='Type URL' type="text" style={styles.inputFieldStyle} />
-                        </div>
-                    </div>
 
-                    <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText}>Protocol</div>
-                        <div>
-                            <Select
-                                // onChange={(e) => {
-                                //     setSimId(e.id)
-                                // }}
-                                options={protocolOptions}
-                                // value={allNumber.filter(item => item.id === simId)}
-                                menuPortalTarget={document.body}
-                                menuPlacement="auto"
-                                placeholder={'Select Protocol'}
-                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                            />
-                        </div>
-                    </div>
+                    {values?.checks?.map((checkData, index) => {
+                        return (
+                            <div
+                                key={`checkData-${index}`}
+                                style={{ marginTop: index > 0 && '30px' }}
+                            >
+
+                                {values?.checks?.length > 1 &&
+                                    <div>
+                                        {`API Check ${index + 1}`}
+                                    </div>
+                                }
+
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText}>URL Path</div>
+                                    <div>
+                                        <input
+                                            placeholder='Type URL'
+                                            type="text"
+                                            style={styles.inputFieldStyle}
+                                            value={checkData?.url}
+                                            onChange={(e) => handleCheckInput('url', e.target.value, index)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText}>Protocol</div>
+                                    <div>
+                                        <Select
+                                            value={protocolOptions?.filter(protocolOption => protocolOption?.value === checkData?.protocol)?.[0]}
+                                            onChange={(e) => handleCheckInput('protocol', e.value, index)}
+                                            options={protocolOptions}
+                                            menuPortalTarget={document.body}
+                                            menuPlacement="auto"
+                                            placeholder={'Select Protocol'}
+                                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                        />
+                                    </div>
+                                </div>
 
 
-                    <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText}>Method</div>
-                        <div>
-                            <Select
-                                // onChange={(e) => {
-                                //     setSimId(e.id)
-                                // }}
-                                options={methodOptions}
-                                // value={allNumber.filter(item => item.id === simId)}
-                                menuPortalTarget={document.body}
-                                menuPlacement="auto"
-                                placeholder={'Select Method'}
-                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                            />
-                        </div>
-                    </div>
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText}>Method</div>
+                                    <div>
+                                        <Select
+                                            value={methodOptions?.filter(methodOption => methodOption?.value === checkData?.method)?.[0]}
+                                            onChange={(e) => handleCheckInput('method', e.value, index)}
+                                            options={methodOptions}
+                                            menuPortalTarget={document.body}
+                                            menuPlacement="auto"
+                                            placeholder={'Select Method'}
+                                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                        />
+                                    </div>
+                                </div>
 
-                    <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText}>Success Codes</div>
-                        <div>
-                            <Select
-                                // onChange={(e) => {
-                                //     setSimId(e.id)
-                                // }}
-                                options={statusCodeOptions}
-                                // value={allNumber.filter(item => item.id === simId)}
-                                isMulti
-                                className="basic-multi-select"
-                                classNamePrefix="select"
-                                menuPortalTarget={document.body}
-                                menuPlacement="auto"
-                                placeholder={'Select Protocol'}
-                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                            />
-                        </div>
-                    </div>
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText}>Success Codes</div>
+                                    <div>
+                                        <Select
+                                            value={statusCodeOptions?.filter(statusCodeOption => checkData?.successCodes?.includes(statusCodeOption?.value))}
+                                            onChange={(e) => handleSuccessCodeMultiSelect(e, index)}
+                                            options={statusCodeOptions}
+                                            isMulti
+                                            className="basic-multi-select"
+                                            classNamePrefix="select"
+                                            menuPortalTarget={document.body}
+                                            menuPlacement="auto"
+                                            placeholder={'Select Protocol'}
+                                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                        />
+                                    </div>
+                                </div>
 
-                    <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText}>Timeout seconds (must be less than 10)</div>
-                        <div>
-                            <input placeholder='Timeout seconds' type="text" style={styles.inputFieldStyle} />
-                        </div>
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText}>Timeout seconds (must be less than 10)</div>
+                                    <div>
+                                        <input
+                                            placeholder='Timeout seconds'
+                                            type="text"
+                                            style={styles.inputFieldStyle}
+                                            value={checkData?.timeoutSeconds}
+                                            onChange={(e) => handleCheckInput('timeoutSeconds', e.target.value, index)}
+                                        />
+                                    </div>
+                                </div>
+
+                                {values?.checks?.length > 1 &&
+                                    <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', width: '200px' }} onClick={() => removeCheck(index)}>
+                                        <img src={CircularMinusIcon} alt='Minus Icon' /> &nbsp;&nbsp;
+                                        <span>Remove API Check</span>
+                                    </div>
+                                }
+                            </div>
+                        )
+                    })}
+
+                    <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', width: '200px' }} onClick={() => addMoreApiCheck()}>
+                        <img src={CircularAddIcon} alt='Add Icon' /> &nbsp;&nbsp;
+                        <span>Add More API Check</span>
                     </div>
 
 
@@ -233,7 +326,7 @@ const AddNewApiModal = (props) => {
                         </div>
                         <div
                             style={styles.blueButton}
-                        // onClick={() => setAddNewApiModalVisualize(true)}
+                            onClick={handleSubmit}
                         >
                             Create New Check
                         </div>
