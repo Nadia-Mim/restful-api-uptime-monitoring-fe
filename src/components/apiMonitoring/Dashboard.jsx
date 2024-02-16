@@ -7,6 +7,8 @@ import CustomToggleSwitch from '../common/customSwitch/CustomToggleSwitch'
 import AddNewApiModal from './AddNewApiModal'
 import Select from "react-select";
 import { getAllChecks } from '../../api/apiChecks/GET'
+import DeleteModal from '../common/modals/deleteModal/DeleteModal'
+import { deleteApiCheck } from '../../api/apiChecks/DELETE'
 
 
 const styles = {
@@ -112,9 +114,15 @@ let arr = [1, 2, 3, 4, 5, 6]
 const Dashboard = () => {
 
     const [allApiChecks, setAllApiChecks] = useState([]);
-    const [filteredApiChecks, setFilteredApiChecks] = useState([])
+    const [filteredApiChecks, setFilteredApiChecks] = useState([]);
+    const [selectedApiCheckToEdit, setSelectedApiCheckToEdit] = useState({});
     const [addNewApiModalVisualize, setAddNewApiModalVisualize] = useState(false);
     const [selectedState, setSelectedState] = useState('Active');
+    const [reload, setReload] = useState(false);
+
+    const [apiCheckIdToBeDeleted, setApiCheckIdToBeDeleted] = useState('');
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [message, setMessage] = useState('');
 
 
     useEffect(() => {
@@ -140,11 +148,22 @@ const Dashboard = () => {
                 }
             });
         }, 1000 * 60)
-    }, [])
+    }, [reload])
 
 
-    const handleStateChange = () => {
+    const handleDeleteApiCheck = (apiCheckId) => {
+        setApiCheckIdToBeDeleted(apiCheckId);
+        setMessage('Are you sure you want to delete this API check?');
+        setDeleteModalVisible(true);
+    }
 
+    const actionOnDeleteModal = (requestId) => {
+        deleteApiCheck(requestId).then(response => {
+            if (response?.[0]) {
+                setDeleteModalVisible(false);
+                setReload(!reload);
+            }
+        })
     }
 
     return (
@@ -154,6 +173,20 @@ const Dashboard = () => {
                 <AddNewApiModal
                     addNewApiModalVisualize={addNewApiModalVisualize}
                     setAddNewApiModalVisualize={setAddNewApiModalVisualize}
+                    selectedApiCheckToEdit={selectedApiCheckToEdit}
+                    setSelectedApiCheckToEdit={setSelectedApiCheckToEdit}
+                    reload={reload}
+                    setReload={setReload}
+                />
+            }
+
+            {deleteModalVisible &&
+                <DeleteModal
+                    deleteModalVisible={deleteModalVisible}
+                    setDeleteModalVisible={setDeleteModalVisible}
+                    message={message}
+                    requestId={apiCheckIdToBeDeleted}
+                    actionOnDeleteModal={actionOnDeleteModal}
                 />
             }
 
@@ -229,7 +262,7 @@ const Dashboard = () => {
                         <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
                             <div>
                                 {/* Progress */}
-                                <div>
+                                {/* <div>
                                     <div>Connectivity</div>
                                 </div>
 
@@ -242,13 +275,12 @@ const Dashboard = () => {
 
                                     <div>
                                         <CustomToggleSwitch
-                                            // isChecked={true}
                                             origin={`api-state`}
                                             disabled={false}
                                             actionOnChange={() => handleStateChange()}
                                         />
                                     </div>
-                                </div>
+                                </div> */}
 
 
                                 <div style={{ ...styles.flexBetween, marginBottom: '10px' }}>
@@ -282,8 +314,20 @@ const Dashboard = () => {
                                     <div>
                                         <div style={styles.smallText}>Action</div>
                                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <img src={EditIcon} style={{ cursor: 'pointer' }} alt='EditIcon' />
-                                            <img src={DeleteIcon} style={{ cursor: 'pointer' }} alt='DeleteIcon' />
+                                            <img
+                                                src={EditIcon}
+                                                style={{ cursor: 'pointer' }}
+                                                alt='EditIcon'
+                                                onClick={() => {
+                                                    setSelectedApiCheckToEdit(apiCheckDetails);
+                                                    setAddNewApiModalVisualize(true);
+                                                }}
+                                            />
+                                            <img src={DeleteIcon}
+                                                style={{ cursor: 'pointer' }}
+                                                alt='DeleteIcon'
+                                                onClick={() => handleDeleteApiCheck(apiCheckDetails?._id)}
+                                            />
                                         </div>
                                     </div>
                                 </div>

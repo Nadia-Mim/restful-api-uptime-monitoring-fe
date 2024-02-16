@@ -1,11 +1,12 @@
 import { useFormik } from "formik";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Select from "react-select";
 import * as Yup from "yup";
 import CircularAddIcon from '../../icons/CircularAddIcon.svg';
 import CircularMinusIcon from '../../icons/CircularMinusIcon.svg';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
 import { addNewChecks } from "../../api/apiChecks/POST";
+import { updateCheck } from "../../api/apiChecks/PUT";
 
 const styles = {
     largeText: {
@@ -145,25 +146,47 @@ const checkSampleData = {
 
 const AddNewApiModal = (props) => {
 
+    const [purpose, setPurpose] = useState('ADD');
+
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
         initialValues: {},
         validationSchema: Yup.object().shape({
 
         }),
         onSubmit: (value) => {
-            addNewChecks(values).then(response => {
-                if(response?.[0]){
-                    debugger
-                }
-            });
+            if (purpose === 'ADD') {
+                addNewChecks(values).then(response => {
+                    if (response?.[0]) {
+                        props.setReload(!props?.reload);
+                        props.setAddNewApiModalVisualize(false);
+                    }
+                });
+            } else {
+                updateCheck(values).then(response => {
+                    if (response?.[0]) {
+                        props.setSelectedApiCheckToEdit({});
+                        props.setReload(!props?.reload);
+                        props.setAddNewApiModalVisualize(false);
+                    }
+                });
+            }
         },
     });
 
     useEffect(() => {
-        setValues({
-            checks: [{ ...checkSampleData }]
-        });
-    }, [])
+
+        if (props?.selectedApiCheckToEdit && Object.keys(props?.selectedApiCheckToEdit)?.length > 0) {
+            setPurpose('EDIT');
+            setValues({
+                checks: [{ ...props?.selectedApiCheckToEdit }]
+            });
+        } else {
+            setPurpose('ADD');
+            setValues({
+                checks: [{ ...checkSampleData }]
+            });
+        }
+    }, [props])
 
     const addMoreApiCheck = () => {
         setValues({
@@ -187,7 +210,7 @@ const AddNewApiModal = (props) => {
 
         checkData[index] = {
             ...checkData?.[index],
-            [fieldName]: value
+            [fieldName]: fieldName === 'timeoutSeconds' ? Number(value) : value
         }
 
         setValues({
