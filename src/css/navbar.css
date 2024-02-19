@@ -23,7 +23,7 @@
     margin: 40px 0;
 }
 
-.left-nav ul li nav .icon {
+.left-nav ul li a .icon {
     position: relative;
     width: 80px;
     display: block;
@@ -32,7 +32,7 @@
     justify-content: center;
 }
 
-.left-nav ul li:hover nav .icon {
+.left-nav ul li:hover a .icon {
     transform: scale(0.8);
 }
 

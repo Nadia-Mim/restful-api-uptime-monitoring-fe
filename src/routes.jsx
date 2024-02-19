@@ -11,7 +11,7 @@ import AuthContext from './contexts/AuthContext';
 const Login = React.lazy(() => import('./components/login/Login'));
 const SignUp = React.lazy(() => import('./components/login/SignUp'));
 const Dashboard = React.lazy(() => import('./components/apiMonitoring/Dashboard'));
-
+const UserDetails = React.lazy(() => import('./components/user/UserDetails'));
 
 const routes = () => {
 
@@ -29,6 +29,7 @@ const routes = () => {
                             {authContextConsumer?.authData &&
                                 <>
                                     <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
+                                    <Route exact path='/user' name="User" element={<UserDetails />} />
                                 </>
                             }
 
