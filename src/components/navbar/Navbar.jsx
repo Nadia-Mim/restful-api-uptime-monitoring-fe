@@ -30,7 +30,7 @@ const Navbar = () => {
             <div className='left-nav'>
                 <ul>
                     <li>
-                        <Link to="/">
+                        <Link to="/dashboard">
                             <span className='icon'><img src={Gear} style={{ height: '28px', width: '28px' }} /></span>
                             <span className='circle'></span>
                         </Link>

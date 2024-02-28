@@ -11,7 +11,9 @@ import AuthContext from './contexts/AuthContext';
 const Login = React.lazy(() => import('./components/login/Login'));
 const SignUp = React.lazy(() => import('./components/login/SignUp'));
 const Dashboard = React.lazy(() => import('./components/apiMonitoring/Dashboard'));
-const UserDetails = React.lazy(() => import('./components/user/UserDetails'));
+const UserProfile = React.lazy(() => import('./components/user/UserProfile'));
+
+let authData = JSON.parse(localStorage.getItem('authData'));
 
 const routes = () => {
 
@@ -21,15 +23,15 @@ const routes = () => {
         <div>
             <HashRouter>
 
-                {authContextConsumer?.authData && <Navbar />}
+                {authContextConsumer?.authData?.expires > Date.now() && <Navbar />}
 
-                <div className={authContextConsumer?.authData ? "main-content" : ''}>
+                <div className={(authContextConsumer?.authData?.expires > Date.now()) ? "main-content" : ''}>
                     <React.Suspense>
                         <Routes>
-                            {authContextConsumer?.authData &&
+                            {(authContextConsumer?.authData?.expires > Date.now()) &&
                                 <>
                                     <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
-                                    <Route exact path='/user' name="User" element={<UserDetails />} />
+                                    <Route exact path='/user' name="User" element={<UserProfile />} />
                                 </>
                             }
 

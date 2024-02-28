@@ -4,3 +4,10 @@
 input {
     color: #fff;
 }
+
+label.required::after, div.required::after {
+    color: red;
+    content: ' *';
+    display: inline;
+    font-size: large;
+}

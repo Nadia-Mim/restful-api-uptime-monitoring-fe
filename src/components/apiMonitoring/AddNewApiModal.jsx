@@ -2,24 +2,20 @@ import { useFormik } from "formik";
 import React, { useEffect, useState } from 'react';
 import Select from "react-select";
 import * as Yup from "yup";
+import { addNewChecks } from "../../api/apiChecks/POST";
+import { updateCheck } from "../../api/apiChecks/PUT";
+import ErrorTooltip from '../../components/common/ErrorTooltip/ErrorTooltip';
 import CircularAddIcon from '../../icons/CircularAddIcon.svg';
 import CircularMinusIcon from '../../icons/CircularMinusIcon.svg';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
-import { addNewChecks } from "../../api/apiChecks/POST";
-import { updateCheck } from "../../api/apiChecks/PUT";
 
 const styles = {
-    largeText: {
-        fontSize: '35px',
-        fontWeight: 400,
-    },
     smallText: {
         fontSize: '12px',
         fontWeight: 300,
     },
     blueButton: {
         background: '#4545E6',
-        width: '150px',
         padding: '10px',
         cursor: 'pointer',
         borderRadius: '5px'
@@ -62,6 +58,14 @@ const styles = {
             color: 'white',
             fontWeight: 300
         }),
+    },
+    customError: {
+        float: "right",
+        marginRight: "6px",
+        marginTop: "-30px",
+        position: "relative",
+        zIndex: 2,
+        color: "red",
     }
 }
 
@@ -141,7 +145,8 @@ const checkSampleData = {
     url: '',
     method: '',
     successCodes: [],
-    timeoutSeconds: 1
+    timeoutSeconds: 1,
+    isActive: true,
 }
 
 const AddNewApiModal = (props) => {
@@ -151,7 +156,16 @@ const AddNewApiModal = (props) => {
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
         initialValues: {},
         validationSchema: Yup.object().shape({
-
+            checks: Yup.array().of(
+                Yup.object().shape({
+                    protocol: Yup.string().required('Protocol is required'),
+                    url: Yup.string().required('URL is required'),
+                    method: Yup.string().required('Method is required'),
+                    successCodes: Yup.array().of(Yup.string().required('Success code is required')).min(1, 'At least one success code is required'),
+                    timeoutSeconds: Yup.number().required('Timeout seconds is required').min(1, 'Timeout seconds must be greater than 0').max(10, 'Timeout seconds must be less than or equal to 10'),
+                    isActive: Yup.boolean()
+                })
+            )
         }),
         onSubmit: (value) => {
             if (purpose === 'ADD') {
@@ -249,7 +263,7 @@ const AddNewApiModal = (props) => {
                                 }
 
                                 <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText}>URL Path</div>
+                                    <div style={styles.smallText} className="required">URL Path</div>
                                     <div>
                                         <input
                                             placeholder='Type URL'
@@ -258,11 +272,14 @@ const AddNewApiModal = (props) => {
                                             value={checkData?.url}
                                             onChange={(e) => handleCheckInput('url', e.target.value, index)}
                                         />
+                                        {touched?.checks?.[index].url && errors?.checks?.[index].url && (
+                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].url} origin={`url`} /></span>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText}>Protocol</div>
+                                    <div style={styles.smallText} className="required">Protocol</div>
                                     <div>
                                         <Select
                                             value={protocolOptions?.filter(protocolOption => protocolOption?.value === checkData?.protocol)?.[0]}
@@ -273,12 +290,15 @@ const AddNewApiModal = (props) => {
                                             placeholder={'Select Protocol'}
                                             styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                         />
+                                        {touched?.checks?.[index].protocol && errors?.checks?.[index].protocol && (
+                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].protocol} origin={`protocol`} /></span>
+                                        )}
                                     </div>
                                 </div>
 
 
                                 <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText}>Method</div>
+                                    <div style={styles.smallText} className="required">Method</div>
                                     <div>
                                         <Select
                                             value={methodOptions?.filter(methodOption => methodOption?.value === checkData?.method)?.[0]}
@@ -289,11 +309,14 @@ const AddNewApiModal = (props) => {
                                             placeholder={'Select Method'}
                                             styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                         />
+                                        {touched?.checks?.[index].method && errors?.checks?.[index].method && (
+                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].method} origin={`method`} /></span>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText}>Success Codes</div>
+                                    <div style={styles.smallText} className="required">Success Codes</div>
                                     <div>
                                         <Select
                                             value={statusCodeOptions?.filter(statusCodeOption => checkData?.successCodes?.includes(statusCodeOption?.value))}
@@ -307,11 +330,14 @@ const AddNewApiModal = (props) => {
                                             placeholder={'Select Protocol'}
                                             styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                         />
+                                        {touched?.checks?.[index].successCodes && errors?.checks?.[index].successCodes && (
+                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].successCodes} origin={`successCodes`} /></span>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText}>Timeout seconds (must be less than 10)</div>
+                                    <div style={styles.smallText} className="required">Timeout seconds (must be less than 10)</div>
                                     <div>
                                         <input
                                             placeholder='Timeout seconds'
@@ -320,6 +346,9 @@ const AddNewApiModal = (props) => {
                                             value={checkData?.timeoutSeconds}
                                             onChange={(e) => handleCheckInput('timeoutSeconds', e.target.value, index)}
                                         />
+                                        {touched?.checks?.[index].timeoutSeconds && errors?.checks?.[index].timeoutSeconds && (
+                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].timeoutSeconds} origin={`timeoutSeconds`} /></span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -333,10 +362,12 @@ const AddNewApiModal = (props) => {
                         )
                     })}
 
-                    <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', width: '200px' }} onClick={() => addMoreApiCheck()}>
-                        <img src={CircularAddIcon} alt='Add Icon' /> &nbsp;&nbsp;
-                        <span>Add More API Check</span>
-                    </div>
+                    {purpose === 'ADD' &&
+                        <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', width: '200px' }} onClick={() => addMoreApiCheck()}>
+                            <img src={CircularAddIcon} alt='Add Icon' /> &nbsp;&nbsp;
+                            <span>Add More API Check</span>
+                        </div>
+                    }
 
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '25px 0' }}>
@@ -348,10 +379,10 @@ const AddNewApiModal = (props) => {
                             Cancel
                         </div>
                         <div
-                            style={styles.blueButton}
+                            style={{ ...styles.blueButton, width: purpose === 'ADD' ? '150px' : '120px' }}
                             onClick={handleSubmit}
                         >
-                            Create New Check
+                            {purpose === 'ADD' ? "Create New Check" : "Update Check"}
                         </div>
                     </div>
 

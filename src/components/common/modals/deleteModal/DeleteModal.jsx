@@ -26,6 +26,7 @@ const DeleteModal = (props) => {
             <CustomModal visible={props?.deleteModalVisible}>
 
                 <CustomModalHeader onClose={() => props.setDeleteModalVisible(false)}>
+                    Delete API Check
                 </CustomModalHeader>
                 
                 <CustomModalBody style={{ padding: '15px 5%' }}>

@@ -9,6 +9,9 @@ import Select from "react-select";
 import { getAllChecks } from '../../api/apiChecks/GET'
 import DeleteModal from '../common/modals/deleteModal/DeleteModal'
 import { deleteApiCheck } from '../../api/apiChecks/DELETE'
+import EmptyScreen from '../common/emptyScreen/EmptyScreen'
+import { updateCheck } from '../../api/apiChecks/PUT'
+import Loader from '../common/loader/Loader'
 
 
 const styles = {
@@ -102,7 +105,7 @@ const badgeColors = {
     }
 }
 
-const checkStateOptions = [
+const checkStatusOptions = [
     { label: 'All', value: 'All' },
     { label: 'Active', value: 'Active' },
     { label: 'Inactive', value: 'Inactive' }
@@ -110,6 +113,7 @@ const checkStateOptions = [
 
 let arr = [1, 2, 3, 4, 5, 6]
 
+const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
 
 const Dashboard = () => {
 
@@ -117,37 +121,43 @@ const Dashboard = () => {
     const [filteredApiChecks, setFilteredApiChecks] = useState([]);
     const [selectedApiCheckToEdit, setSelectedApiCheckToEdit] = useState({});
     const [addNewApiModalVisualize, setAddNewApiModalVisualize] = useState(false);
-    const [selectedState, setSelectedState] = useState('Active');
+    const [selectedStatus, setSelectedStatus] = useState('Active');
     const [reload, setReload] = useState(false);
+    const [searchedWord, setSearchedWord] = useState('');
 
     const [apiCheckIdToBeDeleted, setApiCheckIdToBeDeleted] = useState('');
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [message, setMessage] = useState('');
+    const [showLoader, setShowLoader] = useState(false);
 
 
     useEffect(() => {
-        getAllChecks().then(response => {
-            if (response?.[0]) {
-                setAllApiChecks(response?.[0]);
-                setFilteredApiChecks(response?.[0]);
-            } else {
-                setAllApiChecks([]);
-                setFilteredApiChecks([]);
-            }
-        });
-
-
-        setInterval(() => {
-            getAllChecks().then(response => {
+        if (authData?.userId) {
+            setShowLoader(true);
+            getAllChecks(authData?.userId).then(response => {
+                setShowLoader(false);
                 if (response?.[0]) {
                     setAllApiChecks(response?.[0]);
-                    setFilteredApiChecks(response?.[0]);
+                    setFilteredApiChecks(response?.[0]?.filter(apiCheck => apiCheck?.isActive === true));
                 } else {
                     setAllApiChecks([]);
                     setFilteredApiChecks([]);
                 }
             });
-        }, 1000 * 60)
+
+
+            setInterval(() => {
+                getAllChecks(authData?.userId).then(response => {
+                    if (response?.[0]) {
+                        setAllApiChecks(response?.[0]);
+                        setFilteredApiChecks(response?.[0]?.filter(apiCheck => apiCheck?.isActive === true));
+                    } else {
+                        setAllApiChecks([]);
+                        setFilteredApiChecks([]);
+                    }
+                });
+            }, 1000 * 60)
+        }
     }, [reload])
 
 
@@ -163,11 +173,55 @@ const Dashboard = () => {
                 setDeleteModalVisible(false);
                 setReload(!reload);
             }
-        })
+        });
     }
+
+    const updateApiCheckStatus = (isChecked, detailsOfApiCheckToUpdate) => {
+
+        let updatedApiCheckDetails = {
+            checks: [{
+                ...detailsOfApiCheckToUpdate, isActive: isChecked
+            }]
+        }
+
+
+        updateCheck(updatedApiCheckDetails).then(response => {
+            if (response?.[0]) {
+                setReload(!reload);
+            }
+        });
+    }
+
+    const updateFilteredDataOnStatus = (status) => {
+        if (status === 'All') {
+            setFilteredApiChecks([...allApiChecks]);
+        } else if (status === 'Active') {
+            setFilteredApiChecks([...allApiChecks?.filter(apiCheck => apiCheck?.isActive === true)]);
+        } else {
+            setFilteredApiChecks([...allApiChecks?.filter(apiCheck => apiCheck?.isActive === false)]);
+        }
+    }
+
+    const handleFilter = (wordSearched) => {
+        setSearchedWord(wordSearched);
+
+        const newFilter = allApiChecks?.filter((value) => {
+
+            return (value?.protocol?.toLowerCase()?.includes(wordSearched?.toLowerCase()) ||
+                value?.url?.toLowerCase()?.includes(wordSearched?.toLowerCase()) ||
+                value?.method?.toLowerCase()?.includes(wordSearched?.toLowerCase())
+            )
+        });
+
+        setFilteredApiChecks([...newFilter]);
+    };
 
     return (
         <div>
+
+            {showLoader &&
+                <Loader />
+            }
 
             {addNewApiModalVisualize &&
                 <AddNewApiModal
@@ -193,27 +247,27 @@ const Dashboard = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
                 <div style={styles.cardStyle}>
                     <div style={styles.smallText}>Total API Count</div>
-                    <div style={styles.largeText}>10</div>
+                    <div style={styles.largeText}>{allApiChecks?.length}</div>
                 </div>
 
                 <div style={styles.cardStyle}>
                     <div style={styles.smallText}>Currently Up</div>
-                    <div style={styles.largeText}>10</div>
+                    <div style={styles.largeText}>{allApiChecks?.filter(apiCheck => apiCheck?.state === 'UP')?.length}</div>
                 </div>
 
                 <div style={styles.cardStyle}>
                     <div style={styles.smallText}>Currently Down</div>
-                    <div style={styles.largeText}>10</div>
+                    <div style={styles.largeText}>{allApiChecks?.filter(apiCheck => apiCheck?.state === 'DOWN')?.length}</div>
                 </div>
 
                 <div style={styles.cardStyle}>
-                    <div style={styles.smallText}>Avg. Response Time</div>
-                    <div style={styles.largeText}>10</div>
+                    <div style={styles.smallText}>Currently Active</div>
+                    <div style={styles.largeText}>{allApiChecks?.filter(apiCheck => apiCheck?.isActive === true)?.length}</div>
                 </div>
 
                 <div style={styles.cardStyle}>
-                    <div style={styles.smallText}>Avg. Response Time</div>
-                    <div style={styles.largeText}>10</div>
+                    <div style={styles.smallText}>Avg. Response Time (sec)</div>
+                    <div style={styles.largeText}>0.5</div>
                 </div>
             </div>
 
@@ -228,9 +282,12 @@ const Dashboard = () => {
 
                     <div style={{ width: '200px' }}>
                         <Select
-                            onChange={(e) => setSelectedState(e.value)}
-                            options={checkStateOptions}
-                            value={checkStateOptions?.filter(option => option?.value === selectedState)}
+                            onChange={(e) => {
+                                setSelectedStatus(e.value);
+                                updateFilteredDataOnStatus(e.value);
+                            }}
+                            options={checkStatusOptions}
+                            value={checkStatusOptions?.filter(option => option?.value === selectedStatus)}
                             menuPortalTarget={document.body}
                             menuPlacement="auto"
                             placeholder={'Select State'}
@@ -244,8 +301,8 @@ const Dashboard = () => {
                     <input
                         style={styles.searchButton}
                         placeholder="Search Here"
-                    // value={searchKeyword}
-                    // onChange={(e) => handleOnChangeSearch(e.target.value)}
+                        value={searchedWord}
+                        onChange={(e) => handleFilter(e.target.value)}
                     />
                     <img
                         src={SearchIcon}
@@ -257,12 +314,13 @@ const Dashboard = () => {
 
 
             <div>
-                {filteredApiChecks?.map((apiCheckDetails, index) => {
-                    return (
-                        <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
-                            <div>
-                                {/* Progress */}
-                                {/* <div>
+                {filteredApiChecks?.length > 0 ?
+                    filteredApiChecks?.map((apiCheckDetails, index) => {
+                        return (
+                            <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
+                                <div>
+                                    {/* Progress */}
+                                    {/* <div>
                                     <div>Connectivity</div>
                                 </div>
 
@@ -283,58 +341,73 @@ const Dashboard = () => {
                                 </div> */}
 
 
-                                <div style={{ ...styles.flexBetween, marginBottom: '10px' }}>
-                                    <div>
-                                        <div style={styles.smallText}>URL</div>
-                                        <div>{apiCheckDetails?.url}</div>
-                                    </div>
-
-                                    <div>
-                                        <div style={styles.smallText}>State</div>
+                                    <div style={{ ...styles.flexBetween, marginBottom: '10px' }}>
                                         <div>
-                                            <span style={badgeColors[apiCheckDetails?.state]}>{apiCheckDetails?.state}</span>
+                                            <div style={styles.smallText}>URL</div>
+                                            <div>{apiCheckDetails?.url}</div>
                                         </div>
-                                    </div>
 
-                                    <div>
-                                        <div style={styles.smallText}>Protocol</div>
-                                        <div>{apiCheckDetails?.protocol}</div>
-                                    </div>
+                                        <div>
+                                            <div style={styles.smallText}>State</div>
+                                            <div>
+                                                {(apiCheckDetails?.isActive && apiCheckDetails?.state) ?
+                                                    <span style={badgeColors[apiCheckDetails?.state]}>{apiCheckDetails?.state}</span>
+                                                    :
+                                                    'N/A'
+                                                }
+                                            </div>
+                                        </div>
 
-                                    <div>
-                                        <div style={styles.smallText}>Method</div>
-                                        <div>{apiCheckDetails?.method}</div>
-                                    </div>
+                                        <div>
+                                            <div style={styles.smallText}>Protocol</div>
+                                            <div>{apiCheckDetails?.protocol}</div>
+                                        </div>
 
-                                    <div>
-                                        <div style={styles.smallText}>Success Codes</div>
-                                        <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
-                                    </div>
+                                        <div>
+                                            <div style={styles.smallText}>Method</div>
+                                            <div>{apiCheckDetails?.method}</div>
+                                        </div>
 
-                                    <div>
-                                        <div style={styles.smallText}>Action</div>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <img
-                                                src={EditIcon}
-                                                style={{ cursor: 'pointer' }}
-                                                alt='EditIcon'
-                                                onClick={() => {
-                                                    setSelectedApiCheckToEdit(apiCheckDetails);
-                                                    setAddNewApiModalVisualize(true);
-                                                }}
-                                            />
-                                            <img src={DeleteIcon}
-                                                style={{ cursor: 'pointer' }}
-                                                alt='DeleteIcon'
-                                                onClick={() => handleDeleteApiCheck(apiCheckDetails?._id)}
-                                            />
+                                        <div>
+                                            <div style={styles.smallText}>Success Codes</div>
+                                            <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
+                                        </div>
+
+                                        <div>
+                                            <div style={styles.smallText}>Action</div>
+                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                <CustomToggleSwitch
+                                                    origin={`api-state`}
+                                                    disabled={false}
+                                                    isChecked={apiCheckDetails?.isActive}
+                                                    actionOnChange={(e) => updateApiCheckStatus(e.target.checked, apiCheckDetails)}
+                                                />
+                                                <img
+                                                    src={EditIcon}
+                                                    style={{ cursor: 'pointer' }}
+                                                    alt='EditIcon'
+                                                    onClick={() => {
+                                                        setSelectedApiCheckToEdit(apiCheckDetails);
+                                                        setAddNewApiModalVisualize(true);
+                                                    }}
+                                                />
+                                                <img src={DeleteIcon}
+                                                    style={{ cursor: 'pointer' }}
+                                                    alt='DeleteIcon'
+                                                    onClick={() => handleDeleteApiCheck(apiCheckDetails?._id)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    )
-                })}
+                        )
+                    })
+                    :
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+                        <EmptyScreen title={'No API Checks found.'} description={'API Checks will be available once they are added!'} />
+                    </div>
+                }
             </div>
         </div>
     )

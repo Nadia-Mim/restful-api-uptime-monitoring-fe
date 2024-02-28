@@ -2,7 +2,6 @@ import axios from "axios";
 import Server from "../../../Server";
 const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
 
-
 const handleError = (error) => {
     if (error.response) {
         // Request made and server responded
@@ -16,9 +15,9 @@ const handleError = (error) => {
     }
 }
 
-export const getAllChecks = () => {
+export const getAllChecks = (userId) => {
     return (
-        axios.get(`${Server.baseApi}/check?userId=${authData?.userId}`, {
+        axios.get(`${Server.baseApi}/check?userId=${userId}`, {
             headers: {
                 'Content-Type': "application/json",
                 'token': authData?.token

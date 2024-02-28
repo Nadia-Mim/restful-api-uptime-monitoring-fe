@@ -3,8 +3,11 @@ import Server from "../../../Server";
 
 
 const handleError = (error) => {
-    if (error.response) {
+    if (error?.response?.data?.error) {
         // Request made and server responded
+        return ([false, error?.response?.data?.error])
+    } else if (error.response) {
+        // Request made and server did not specify reason
         return ([false, "An unexpected error occurred!"])
     } else if (error.request) {
         // The request was made but no response was received

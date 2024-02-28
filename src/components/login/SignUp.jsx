@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import LoginBackground from '../../images/LoginBackground.jpg';
 import { CreateUser } from "../../api/user/POST";
 import { useNavigate } from 'react-router-dom';
+import ErrorTooltip from "../common/ErrorTooltip/ErrorTooltip";
 
 const styles = {
     backgroundStyle: {
@@ -44,6 +45,15 @@ const styles = {
         cursor: 'pointer',
         textAlign: 'center'
     },
+    disabledButton: {
+        padding: '6px',
+        color: '#333333',
+        backgroundColor: '#D3D3D3',
+        fontSize: '16px',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        textAlign: 'center'
+    },
     inputWrapper: {
         position: 'relative',
         borderBottom: '2px solid #35363e',
@@ -57,6 +67,15 @@ const styles = {
         border: 'none',
         background: 'none',
         outline: 'none'
+    },
+    customError: {
+        float: "right",
+        marginRight: "6px",
+        marginTop: "-30px",
+        position: "relative",
+        zIndex: 2,
+        color: "red",
+        fontSize: '14px'
     }
 }
 
@@ -76,7 +95,11 @@ const SignUp = () => {
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
         initialValues: initialValues,
         validationSchema: Yup.object().shape({
-
+            firstName: Yup.string().required('First Name is required'),
+            lastName: Yup.string().required('Last Name is required'),
+            email: Yup.string().email('Invalid email').required('Email is required'),
+            phone: Yup.string().required('Phone is required'),
+            password: Yup.string().required('Password is required'),
         }),
         onSubmit: (value) => {
             CreateUser(values).then(response => {
@@ -90,6 +113,8 @@ const SignUp = () => {
     const routeToLogin = () => {
         navigate('/login');
     }
+
+    console.log(values)
 
 
     return (
@@ -107,6 +132,9 @@ const SignUp = () => {
                                 value={values?.firstName}
                                 onChange={(e) => setValues({ ...values, firstName: e.target.value })}
                             />
+                            {touched?.firstName && errors?.firstName && (
+                                <span style={styles.customError}><ErrorTooltip content={errors?.firstName} origin={`firstName`} /></span>
+                            )}
                         </div>
                         <div style={styles.inputWrapper}>
                             <input
@@ -116,6 +144,9 @@ const SignUp = () => {
                                 value={values?.lastName}
                                 onChange={(e) => setValues({ ...values, lastName: e.target.value })}
                             />
+                            {touched?.lastName && errors?.lastName && (
+                                <span style={styles.customError}><ErrorTooltip content={errors?.lastName} origin={`lastName`} /></span>
+                            )}
                         </div>
                         <div style={styles.inputWrapper}>
                             <input
@@ -126,6 +157,9 @@ const SignUp = () => {
                                 value={values?.email}
                                 onChange={(e) => setValues({ ...values, email: e.target.value })}
                             />
+                            {touched?.email && errors?.email && (
+                                <span style={styles.customError}><ErrorTooltip content={errors?.email} origin={`email`} /></span>
+                            )}
                         </div>
                         <div style={styles.inputWrapper}>
                             <input
@@ -135,6 +169,9 @@ const SignUp = () => {
                                 value={values?.phone}
                                 onChange={(e) => setValues({ ...values, phone: e.target.value })}
                             />
+                            {touched?.phone && errors?.phone && (
+                                <span style={styles.customError}><ErrorTooltip content={errors?.phone} origin={`phone`} /></span>
+                            )}
                         </div>
                         <div style={styles.inputWrapper}>
                             <input
@@ -145,6 +182,9 @@ const SignUp = () => {
                                 value={values?.password}
                                 onChange={(e) => setValues({ ...values, password: e.target.value })}
                             />
+                            {touched?.password && errors?.password && (
+                                <span style={styles.customError}><ErrorTooltip content={errors?.password} origin={`password`} /></span>
+                            )}
                         </div>
                         <div style={{ fontSize: '14px' }}>
                             <input
@@ -157,8 +197,12 @@ const SignUp = () => {
                     </div>
                     <div>
                         <div
-                            style={styles.submitButton}
-                            onClick={handleSubmit}
+                            style={values?.tosAgreement ? styles.submitButton : styles.disabledButton}
+                            onClick={() => {
+                                if (values?.tosAgreement) {
+                                    handleSubmit()
+                                }
+                            }}
                         >
                             Create Account
                         </div>
