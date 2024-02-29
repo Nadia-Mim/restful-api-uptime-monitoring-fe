@@ -64,6 +64,7 @@ const styles = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        flexWrap: 'wrap'
     },
     selectStyle: {
         control: (styles) => ({
@@ -342,12 +343,12 @@ const Dashboard = () => {
 
 
                                     <div style={{ ...styles.flexBetween, marginBottom: '10px' }}>
-                                        <div>
+                                        <div style={{width: '170px'}}>
                                             <div style={styles.smallText}>URL</div>
                                             <div>{apiCheckDetails?.url}</div>
                                         </div>
 
-                                        <div>
+                                        <div style={{width: '100px'}}>
                                             <div style={styles.smallText}>State</div>
                                             <div>
                                                 {(apiCheckDetails?.isActive && apiCheckDetails?.state) ?
@@ -358,22 +359,22 @@ const Dashboard = () => {
                                             </div>
                                         </div>
 
-                                        <div>
+                                        <div style={{width: '100px'}}>
                                             <div style={styles.smallText}>Protocol</div>
                                             <div>{apiCheckDetails?.protocol}</div>
                                         </div>
 
-                                        <div>
+                                        <div style={{width: '100px'}}>
                                             <div style={styles.smallText}>Method</div>
                                             <div>{apiCheckDetails?.method}</div>
                                         </div>
 
-                                        <div>
+                                        <div style={{width: '150px'}}>
                                             <div style={styles.smallText}>Success Codes</div>
                                             <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
                                         </div>
 
-                                        <div>
+                                        <div style={{width: '100px'}}>
                                             <div style={styles.smallText}>Action</div>
                                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <CustomToggleSwitch
