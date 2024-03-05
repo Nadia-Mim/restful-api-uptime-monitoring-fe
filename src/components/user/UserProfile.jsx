@@ -7,6 +7,8 @@ import Loader from '../common/loader/Loader';
 import ResetUserPasswordModal from './ResetUserPasswordModal';
 import { updateUserDetails } from "../../api/user/PUT";
 import ErrorTooltip from "../common/ErrorTooltip/ErrorTooltip";
+import SuccessModal from "../common/modals/successModal/SuccessModal";
+import ErrorModal from "../common/modals/errorModal/ErrorModal";
 
 const styles = {
     card: {
@@ -91,6 +93,10 @@ const UserProfile = () => {
     const [resetPassModalVisualize, setResetPassModalVisualize] = useState(false);
     const [showLoader, setShowLoader] = useState(false);
 
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [message, setMessage] = useState('');
+
     useEffect(() => {
         if (authData?.userId) {
             setShowLoader(true);
@@ -116,13 +122,26 @@ const UserProfile = () => {
         onSubmit: (value) => {
             updateUserDetails(values).then(response => {
                 if (response?.[0]) {
-                    setReload(!reload);
-                    setIsEditable(false);
-                    setValues({});
+                    setMessage('User information updated successfully.')
+                    setSuccessModalVisible(true);
+                } else {
+                    setMessage(response?.[1]);
+                    setErrorModalVisible(true);
                 }
             })
         },
     });
+
+    const actionOnSuccessModal = () => {
+        setReload(!reload);
+        setIsEditable(false);
+        setValues({});
+        setSuccessModalVisible(false);
+    }
+
+    const actionOnErrorModal = () => {
+        setErrorModalVisible(false);
+    }
 
     return (
         <div>
@@ -135,6 +154,22 @@ const UserProfile = () => {
                 <ResetUserPasswordModal
                     resetPassModalVisualize={resetPassModalVisualize}
                     setResetPassModalVisualize={setResetPassModalVisualize}
+                />
+            }
+
+            {successModalVisible &&
+                <SuccessModal
+                    modalVisible={successModalVisible}
+                    actionOnSuccessModal={actionOnSuccessModal}
+                    message={message}
+                />
+            }
+
+            {errorModalVisible &&
+                <ErrorModal
+                    modalVisible={errorModalVisible}
+                    actionOnErrorModal={actionOnErrorModal}
+                    message={message}
                 />
             }
 

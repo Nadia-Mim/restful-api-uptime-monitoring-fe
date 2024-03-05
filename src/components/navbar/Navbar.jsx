@@ -11,7 +11,7 @@ const Navbar = () => {
     const navigate = useNavigate(); // To route to another page
 
     const handleLogout = () => {
-        localStorage.removeItem("authData");
+        localStorage.clear();
         authContextConsumer.setAuthData('');
         navigate('/login');
     }

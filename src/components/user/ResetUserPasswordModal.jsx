@@ -1,9 +1,11 @@
 import { useFormik } from "formik";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as Yup from "yup";
-import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
 import { resetPassword } from "../../api/user/PUT";
 import ErrorTooltip from "../common/ErrorTooltip/ErrorTooltip";
+import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
+import ErrorModal from "../common/modals/errorModal/ErrorModal";
+import SuccessModal from "../common/modals/successModal/SuccessModal";
 
 
 const styles = {
@@ -50,6 +52,10 @@ const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
 
 const ResetUserPasswordModal = (props) => {
 
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [message, setMessage] = useState('');
+
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
         initialValues: {},
         validationSchema: Yup.object().shape({
@@ -62,7 +68,11 @@ const ResetUserPasswordModal = (props) => {
         onSubmit: (value) => {
             resetPassword(values).then(response => {
                 if (response?.[0]) {
-                    props.setResetPassModalVisualize(false);
+                    setMessage('Password updated successfully.');
+                    setSuccessModalVisible(true);
+                } else {
+                    setMessage(response?.[1]);
+                    setErrorModalVisible(true);
                 }
             });
         }
@@ -76,6 +86,15 @@ const ResetUserPasswordModal = (props) => {
             reWrittenPassword: ""
         });
     }, [])
+
+    const actionOnSuccessModal = () => {
+        setSuccessModalVisible(false);
+        props.setResetPassModalVisualize(false);
+    }
+
+    const actionOnErrorModal = () => {
+        setErrorModalVisible(false);
+    }
 
 
     return (
@@ -148,6 +167,22 @@ const ResetUserPasswordModal = (props) => {
                     </div>
                 </CustomModalBody>
             </CustomModal>
+
+            {successModalVisible &&
+                <SuccessModal
+                    modalVisible={successModalVisible}
+                    actionOnSuccessModal={actionOnSuccessModal}
+                    message={message}
+                />
+            }
+
+            {errorModalVisible &&
+                <ErrorModal
+                    modalVisible={errorModalVisible}
+                    actionOnErrorModal={actionOnErrorModal}
+                    message={message}
+                />
+            }
         </div>
     )
 }

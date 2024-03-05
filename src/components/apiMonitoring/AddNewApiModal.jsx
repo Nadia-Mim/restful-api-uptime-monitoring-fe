@@ -8,6 +8,8 @@ import ErrorTooltip from '../../components/common/ErrorTooltip/ErrorTooltip';
 import CircularAddIcon from '../../icons/CircularAddIcon.svg';
 import CircularMinusIcon from '../../icons/CircularMinusIcon.svg';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
+import SuccessModal from "../common/modals/successModal/SuccessModal";
+import ErrorModal from "../common/modals/errorModal/ErrorModal";
 
 const styles = {
     smallText: {
@@ -152,6 +154,9 @@ const checkSampleData = {
 const AddNewApiModal = (props) => {
 
     const [purpose, setPurpose] = useState('ADD');
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [message, setMessage] = useState('');
 
     const { handleSubmit, handleChange, values, touched, errors, handleBlur, setValues, resetForm, setErrors } = useFormik({
         initialValues: {},
@@ -171,16 +176,21 @@ const AddNewApiModal = (props) => {
             if (purpose === 'ADD') {
                 addNewChecks(values).then(response => {
                     if (response?.[0]) {
-                        props.setReload(!props?.reload);
-                        props.setAddNewApiModalVisualize(false);
+                        setMessage('API Check(s) added successfully.')
+                        setSuccessModalVisible(true);
+                    } else {
+                        setMessage(response?.[1]);
+                        setErrorModalVisible(true);
                     }
                 });
             } else {
                 updateCheck(values).then(response => {
                     if (response?.[0]) {
-                        props.setSelectedApiCheckToEdit({});
-                        props.setReload(!props?.reload);
-                        props.setAddNewApiModalVisualize(false);
+                        setMessage('API Check updated successfully.')
+                        setSuccessModalVisible(true);
+                    } else {
+                        setMessage(response?.[1]);
+                        setErrorModalVisible(true);
                     }
                 });
             }
@@ -243,8 +253,20 @@ const AddNewApiModal = (props) => {
         });
     }
 
+    const actionOnSuccessModal = () => {
+        props.setSelectedApiCheckToEdit({});
+        props.setReload(!props?.reload);
+        setSuccessModalVisible(false);
+        props.setAddNewApiModalVisualize(false);
+    }
+
+    const actionOnErrorModal = () => {
+        setErrorModalVisible(false);
+    }
+
     return (
         <div>
+
             <CustomModal visible={props?.addNewApiModalVisualize} style={{ maxWidth: '600px' }}>
                 <CustomModalHeader onClose={() => props.setAddNewApiModalVisualize(false)}>Add New API Checks</CustomModalHeader>
                 <CustomModalBody style={{ padding: '15px 5%' }}>
@@ -389,6 +411,22 @@ const AddNewApiModal = (props) => {
 
                 </CustomModalBody>
             </CustomModal>
+
+            {successModalVisible &&
+                <SuccessModal
+                    modalVisible={successModalVisible}
+                    actionOnSuccessModal={actionOnSuccessModal}
+                    message={message}
+                />
+            }
+
+            {errorModalVisible &&
+                <ErrorModal
+                    modalVisible={errorModalVisible}
+                    actionOnErrorModal={actionOnErrorModal}
+                    message={message}
+                />
+            }
         </div>
     )
 }

@@ -53,11 +53,13 @@ export const CustomModalHeader = (props) => {
                         {props?.children}
                     </div>
                 </div>
-                <div style={{ width: '5%', color: props?.color ? props?.color : 'black', display: 'flex', justifyContent: 'flex-end' }}>
-                    <span style={{ cursor: 'pointer' }} onClick={props?.onClose}>
-                        <img src={Close} width='15' height='15' alt='closeModal' />
-                    </span>
-                </div>
+                {props?.onClose &&
+                    <div style={{ width: '5%', color: props?.color ? props?.color : 'black', display: 'flex', justifyContent: 'flex-end' }}>
+                        <span style={{ cursor: 'pointer' }} onClick={props?.onClose}>
+                            <img src={Close} width='15' height='15' alt='closeModal' />
+                        </span>
+                    </div>
+                }
             </div>
         </div>
     );
