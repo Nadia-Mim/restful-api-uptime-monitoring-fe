@@ -57,7 +57,7 @@ const styles = {
     inputWrapper: {
         position: 'relative',
         borderBottom: '2px solid #35363e',
-        margin: '30px 0'
+        margin: '30px 5px'
     },
     input: {
         width: '100%',
