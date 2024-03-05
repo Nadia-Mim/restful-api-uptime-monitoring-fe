@@ -3,9 +3,9 @@ import Server from "../../../Server";
 const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
 
 const handleError = (error) => {
-    if (error?.response?.data?.message) {
+    if (error?.response?.data?.error) {
         // Request made and server responded
-        return ([false, error?.response?.data?.message])
+        return ([false, error?.response?.data?.error])
     } else if (error.response) {
         // Request made and server responded
         return ([false, "An unexpected error occurred!"])
