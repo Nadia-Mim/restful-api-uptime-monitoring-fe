@@ -149,7 +149,9 @@ const checkSampleData = {
     successCodes: [],
     timeoutSeconds: 1,
     isActive: true,
-}
+    serviceName: ''
+};
+
 
 const AddNewApiModal = (props) => {
 
@@ -166,6 +168,7 @@ const AddNewApiModal = (props) => {
                     protocol: Yup.string().required('Protocol is required'),
                     url: Yup.string().required('URL is required'),
                     method: Yup.string().required('Method is required'),
+                    serviceName: Yup.string().required('Service Name is required'),
                     successCodes: Yup.array().of(Yup.string().required('Success code is required')).min(1, 'At least one success code is required'),
                     timeoutSeconds: Yup.number().required('Timeout seconds is required').min(1, 'Timeout seconds must be greater than 0').max(10, 'Timeout seconds must be less than or equal to 10'),
                     isActive: Yup.boolean()
@@ -176,6 +179,7 @@ const AddNewApiModal = (props) => {
             if (purpose === 'ADD') {
                 addNewChecks(values).then(response => {
                     if (response?.[0]) {
+                        props.setSelectedApiCheckToEdit({});
                         setMessage('API Check(s) added successfully.')
                         setSuccessModalVisible(true);
                     } else {
@@ -186,6 +190,7 @@ const AddNewApiModal = (props) => {
             } else {
                 updateCheck(values).then(response => {
                     if (response?.[0]) {
+                        props.setSelectedApiCheckToEdit({});
                         setMessage('API Check updated successfully.')
                         setSuccessModalVisible(true);
                     } else {
@@ -198,7 +203,7 @@ const AddNewApiModal = (props) => {
     });
 
     useEffect(() => {
-
+        
         if (props?.selectedApiCheckToEdit && Object.keys(props?.selectedApiCheckToEdit)?.length > 0) {
             setPurpose('EDIT');
             setValues({
@@ -254,21 +259,31 @@ const AddNewApiModal = (props) => {
     }
 
     const actionOnSuccessModal = () => {
-        props.setSelectedApiCheckToEdit({});
         props.setReload(!props?.reload);
         setSuccessModalVisible(false);
-        props.setAddNewApiModalVisualize(false);
+        closeModal();
     }
 
     const actionOnErrorModal = () => {
         setErrorModalVisible(false);
     }
 
+    const closeModal = () => {
+        props.setSelectedApiCheckToEdit({});
+        props.setAddNewApiModalVisualize(false);
+    }
+
     return (
         <div>
 
             <CustomModal visible={props?.addNewApiModalVisualize} style={{ maxWidth: '600px' }}>
-                <CustomModalHeader onClose={() => props.setAddNewApiModalVisualize(false)}>Add New API Checks</CustomModalHeader>
+                <CustomModalHeader
+                    onClose={() => {
+                        closeModal()
+                    }}
+                >
+                    {purpose === 'ADD' ? 'Add New API Checks' : 'Edit API Check'}
+                </CustomModalHeader>
                 <CustomModalBody style={{ padding: '15px 5%' }}>
 
                     {values?.checks?.map((checkData, index) => {
@@ -296,6 +311,22 @@ const AddNewApiModal = (props) => {
                                         />
                                         {touched?.checks?.[index].url && errors?.checks?.[index].url && (
                                             <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].url} origin={`url`} /></span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText} className="required">Service Name</div>
+                                    <div>
+                                        <input
+                                            placeholder='Type Service Name'
+                                            type="text"
+                                            style={styles.inputFieldStyle}
+                                            value={checkData?.serviceName}
+                                            onChange={(e) => handleCheckInput('serviceName', e.target.value, index)}
+                                        />
+                                        {touched?.checks?.[index].serviceName && errors?.checks?.[index].serviceName && (
+                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].serviceName} origin={`serviceName`} /></span>
                                         )}
                                     </div>
                                 </div>
@@ -396,7 +427,7 @@ const AddNewApiModal = (props) => {
 
                         <div
                             style={{ ...styles.redButton, marginRight: '15px' }}
-                            onClick={() => props.setAddNewApiModalVisualize(false)}
+                            onClick={() => closeModal()}
                         >
                             Cancel
                         </div>

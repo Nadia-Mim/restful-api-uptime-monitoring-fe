@@ -220,7 +220,9 @@ const Dashboard = () => {
 
             return (value?.protocol?.toLowerCase()?.includes(wordSearched?.toLowerCase()) ||
                 value?.url?.toLowerCase()?.includes(wordSearched?.toLowerCase()) ||
-                value?.method?.toLowerCase()?.includes(wordSearched?.toLowerCase())
+                value?.method?.toLowerCase()?.includes(wordSearched?.toLowerCase()) ||
+                value?.serviceName?.toLowerCase()?.includes(wordSearched?.toLowerCase()) ||
+                value?.state?.toLowerCase()?.includes(wordSearched?.toLowerCase())
             )
         });
 
@@ -358,12 +360,12 @@ const Dashboard = () => {
                         return (
                             <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
                                 <div style={{ ...styles.flexBetween, flexWrap: 'wrap', marginBottom: '10px' }}>
-                                    <div style={{ width: '170px' }}>
+                                    <div style={{ width: '180px' }}>
                                         <div style={styles.smallText}>URL</div>
                                         <div>{apiCheckDetails?.url}</div>
                                     </div>
 
-                                    <div style={{ width: '100px' }}>
+                                    <div style={{ width: '50px' }}>
                                         <div style={styles.smallText}>State</div>
                                         <div>
                                             {(apiCheckDetails?.isActive && apiCheckDetails?.state) ?
@@ -372,6 +374,11 @@ const Dashboard = () => {
                                                 'N/A'
                                             }
                                         </div>
+                                    </div>
+
+                                    <div style={{ width: '210px' }}>
+                                        <div style={styles.smallText}>Service Name</div>
+                                        <div>{apiCheckDetails?.serviceName || 'N/A'}</div>
                                     </div>
 
                                     <div style={{ width: '100px' }}>
@@ -384,7 +391,7 @@ const Dashboard = () => {
                                         <div>{apiCheckDetails?.method}</div>
                                     </div>
 
-                                    <div style={{ width: '150px' }}>
+                                    <div style={{ width: '100px' }}>
                                         <div style={styles.smallText}>Success Codes</div>
                                         <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
                                     </div>
