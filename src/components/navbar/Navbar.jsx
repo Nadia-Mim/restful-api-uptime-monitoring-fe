@@ -20,7 +20,7 @@ const Navbar = () => {
         <div className='nav'>
             <div className='top-nav'>
                 <div>
-                    <img src={Systech} style={{ height: '75px', width: '75px' }} />
+                    <img src={Systech} style={{ height: '80px', width: '80px', marginLeft: '-15px' }} />
                 </div>
                 <div onClick={handleLogout} style={{ cursor: 'pointer' }}>
                     <h3>Log Out</h3>
