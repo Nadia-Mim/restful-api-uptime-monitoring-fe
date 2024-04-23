@@ -154,7 +154,7 @@ const checkSampleData = {
 };
 
 
-const AddNewApiModal = (props) => {
+const AddNewApiModal = React.memo((props) => {
 
     const [purpose, setPurpose] = useState('ADD');
     const [successModalVisible, setSuccessModalVisible] = useState(false);
@@ -504,6 +504,6 @@ const AddNewApiModal = (props) => {
             }
         </div>
     )
-}
+})
 
 export default AddNewApiModal

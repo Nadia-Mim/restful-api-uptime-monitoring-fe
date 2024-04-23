@@ -1,12 +1,15 @@
-import React, { useContext } from 'react';
-import Gear from '../../icons/Gear.svg';
-import User from '../../icons/User.svg';
-import Systech from '../../images/Systech.png';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../../contexts/AuthContext';
+import Gear from '../../icons/Gear.svg';
+import GearBlue from '../../icons/GearBlue.svg';
+import User from '../../icons/User.svg';
+import UserBlue from '../../icons/UserBlue.svg';
+import Systech from '../../images/Systech.png';
 
 const Navbar = () => {
 
+    const [currentNavigation, setCurrentNavigation] = useState('Dashboard');
     const authContextConsumer = useContext(AuthContext);
     const navigate = useNavigate(); // To route to another page
 
@@ -29,15 +32,15 @@ const Navbar = () => {
 
             <div className='left-nav'>
                 <ul>
-                    <li>
+                    <li onClick={() => setCurrentNavigation('Dashboard')}>
                         <Link to="/dashboard">
-                            <span className='icon'><img src={Gear} style={{ height: '28px', width: '28px' }} /></span>
+                            <span className='icon'><img src={currentNavigation === 'Dashboard' ? GearBlue : Gear} style={{ height: '28px', width: '28px' }} /></span>
                             <span className='circle'></span>
                         </Link>
                     </li>
-                    <li>
+                    <li onClick={() => setCurrentNavigation('User')}>
                         <Link to="/user">
-                            <span className='icon'><img src={User} style={{ height: '25px', width: '25px' }} /></span>
+                            <span className='icon'><img src={currentNavigation === 'User' ? UserBlue : User} style={{ height: '25px', width: '25px' }} /></span>
                             <span className='circle'></span>
                         </Link>
                     </li>

@@ -137,6 +137,11 @@ const Login = () => {
                                 style={styles.input}
                                 value={values?.userName}
                                 onChange={(e) => setValues({ ...values, userName: e.target.value })}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSubmit();
+                                    }
+                                }}
                             />
                             {touched?.userName && errors?.userName && (
                                 <span style={styles.customError}><ErrorTooltip content={errors?.userName} origin={`userName`} /></span>
@@ -150,6 +155,11 @@ const Login = () => {
                                 style={styles.input}
                                 value={values?.password}
                                 onChange={(e) => setValues({ ...values, password: e.target.value })}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSubmit();
+                                    }
+                                }}
                             />
                             {touched?.password && errors?.password && (
                                 <span style={styles.customError}><ErrorTooltip content={errors?.password} origin={`password`} /></span>

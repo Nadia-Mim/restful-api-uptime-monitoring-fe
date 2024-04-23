@@ -95,7 +95,7 @@ const styles = {
 
 const badgeColors = {
     UP: {
-        background: 'rgba(219, 201, 41, 1)',
+        background: 'rgba(51, 219, 41, 1)',
         // color: 'rgb(69, 69, 230)',
         padding: '1px 20px',
         fontWeight: 600,
@@ -159,22 +159,27 @@ const Dashboard = () => {
                     setFilteredApiChecks([]);
                 }
             });
-
-            setInterval(() => {
-                if (!addNewApiModalVisualize) {
-                    getAllChecks(authData?.userId).then(response => {
-                        if (response?.[0]) {
-                            setAllApiChecks(response?.[0]);
-                            updateFilteredDataOnStatus(selectedGroup, selectedStatus, response?.[0]);
-                        } else {
-                            setAllApiChecks([]);
-                            setFilteredApiChecks([]);
-                        }
-                    });
-                }
-            }, 1000 * 60)
         }
     }, [reload])
+
+    useEffect(() => {
+        setInterval(() => {
+            getAllApiChecks();
+        }, 1000 * 60)
+    }, [])
+
+    const getAllApiChecks = () => {
+        getAllChecks(authData?.userId).then(response => {
+            if (response?.[0]) {
+                setAllApiChecks(response?.[0]);
+                updateFilteredDataOnStatus(selectedGroup, selectedStatus, response?.[0]);
+                generateGroupOptions(response);
+            } else {
+                setAllApiChecks([]);
+                setFilteredApiChecks([]);
+            }
+        });
+    }
 
 
     const generateGroupOptions = (response) => {
@@ -281,6 +286,8 @@ const Dashboard = () => {
         }
         return 0;
     }
+
+    console.log(selectedGroup)
 
     return (
         <div>
@@ -423,12 +430,12 @@ const Dashboard = () => {
                         return (
                             <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
                                 <div style={{ ...styles.flexBetween, flexWrap: 'wrap', marginBottom: '10px' }}>
-                                    <div style={{ width: '180px' }}>
+                                    <div style={{ width: '300px' }}>
                                         <div style={styles.smallText}>URL</div>
                                         <div>{apiCheckDetails?.url}</div>
                                     </div>
 
-                                    <div style={{ width: '50px' }}>
+                                    <div style={{ width: '70px' }}>
                                         <div style={styles.smallText}>State</div>
                                         <div>
                                             {(apiCheckDetails?.isActive && apiCheckDetails?.state) ?
@@ -459,7 +466,7 @@ const Dashboard = () => {
                                         <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
                                     </div>
 
-                                    <div style={{ width: '100px' }}>
+                                    <div style={{ width: '120px' }}>
                                         <div style={styles.smallText}>Action</div>
                                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                             <CustomToggleSwitch
