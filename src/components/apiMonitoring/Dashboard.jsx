@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import SearchIcon from '../../icons/SearchIcon.svg'
-import RightAlignedProgressParrot from '../../icons/RightAlignedProgressParrot.svg'
-import EditIcon from '../../icons/EditIcon.svg'
-import DeleteIcon from '../../icons/DeleteIcon.svg'
-import CustomToggleSwitch from '../common/customSwitch/CustomToggleSwitch'
-import AddNewApiModal from './AddNewApiModal'
-import Select from "react-select";
-import { getAllChecks } from '../../api/apiChecks/GET'
-import DeleteModal from '../common/modals/deleteModal/DeleteModal'
+import Select from "react-select"
 import { deleteApiCheck } from '../../api/apiChecks/DELETE'
-import EmptyScreen from '../common/emptyScreen/EmptyScreen'
+import { getAllChecks } from '../../api/apiChecks/GET'
 import { updateCheck } from '../../api/apiChecks/PUT'
+import DeleteIcon from '../../icons/DeleteIcon.svg'
+import EditIcon from '../../icons/EditIcon.svg'
+import SearchIcon from '../../icons/SearchIcon.svg'
+import CustomToggleSwitch from '../common/customSwitch/CustomToggleSwitch'
+import EmptyScreen from '../common/emptyScreen/EmptyScreen'
 import Loader from '../common/loader/Loader'
-import SuccessModal from '../common/modals/successModal/SuccessModal'
+import DeleteModal from '../common/modals/deleteModal/DeleteModal'
 import ErrorModal from '../common/modals/errorModal/ErrorModal'
+import SuccessModal from '../common/modals/successModal/SuccessModal'
+import AddNewApiModal from './AddNewApiModal'
 
 
 const styles = {
@@ -46,6 +45,7 @@ const styles = {
     },
     blueButton: {
         background: '#4545E6',
+        height: '22px',
         width: '150px',
         padding: '8px',
         cursor: 'pointer',
@@ -116,12 +116,19 @@ const checkStatusOptions = [
     { label: 'Inactive', value: 'Inactive' }
 ]
 
+const dummyGroups = [
+    { label: 'All', value: 'All' },
+    { label: 'Other', value: 'Other' }
+]
+
 let arr = [1, 2, 3, 4, 5, 6]
 
 const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
 
 const Dashboard = () => {
 
+    const [groupOptions, setGroupOptions] = useState(dummyGroups);
+    const [selectedGroup, setSelectedGroup] = useState('All');
     const [allApiChecks, setAllApiChecks] = useState([]);
     const [filteredApiChecks, setFilteredApiChecks] = useState([]);
     const [selectedApiCheckToEdit, setSelectedApiCheckToEdit] = useState({});
@@ -145,20 +152,20 @@ const Dashboard = () => {
                 setShowLoader(false);
                 if (response?.[0]) {
                     setAllApiChecks(response?.[0]);
-                    updateFilteredDataOnStatus(selectedStatus, response?.[0]);
+                    updateFilteredDataOnStatus(selectedGroup, selectedStatus, response?.[0]);
+                    generateGroupOptions(response);
                 } else {
                     setAllApiChecks([]);
                     setFilteredApiChecks([]);
                 }
             });
 
-
             setInterval(() => {
                 if (!addNewApiModalVisualize) {
                     getAllChecks(authData?.userId).then(response => {
                         if (response?.[0]) {
                             setAllApiChecks(response?.[0]);
-                            setFilteredApiChecks(response?.[0]?.filter(apiCheck => apiCheck?.isActive === true));
+                            updateFilteredDataOnStatus(selectedGroup, selectedStatus, response?.[0]);
                         } else {
                             setAllApiChecks([]);
                             setFilteredApiChecks([]);
@@ -168,6 +175,24 @@ const Dashboard = () => {
             }, 1000 * 60)
         }
     }, [reload])
+
+
+    const generateGroupOptions = (response) => {
+        const uniqueGroups = new Set();
+        const generatedGroupOptions = [
+            { label: 'All', value: 'All' },
+            ...response?.[0]?.map(check => {
+                const group = check?.group;
+                if (!uniqueGroups.has(group)) {
+                    uniqueGroups.add(group);
+                    return { label: group, value: group };
+                }
+                return null;
+            }).filter(option => option !== null), // Filter out null values
+            { label: 'Other', value: 'Other' }
+        ];
+        setGroupOptions(generatedGroupOptions);
+    }
 
 
     const handleDeleteApiCheck = (apiCheckId) => {
@@ -203,14 +228,24 @@ const Dashboard = () => {
         });
     }
 
-    const updateFilteredDataOnStatus = (status, apiChecks = allApiChecks) => {
+    const updateFilteredDataOnStatus = (group, status, apiChecks = allApiChecks) => {
+        let allFilteredChecks = [];
         if (status === 'All') {
-            setFilteredApiChecks([...apiChecks]);
+            allFilteredChecks = filterByGroup([...apiChecks], group);
         } else if (status === 'Active') {
-            setFilteredApiChecks([...apiChecks?.filter(apiCheck => apiCheck?.isActive === true)]);
+            allFilteredChecks = filterByGroup([...apiChecks?.filter(apiCheck => apiCheck?.isActive === true)], group);
         } else {
-            setFilteredApiChecks([...apiChecks?.filter(apiCheck => apiCheck?.isActive === false)]);
+            allFilteredChecks = filterByGroup([...apiChecks?.filter(apiCheck => apiCheck?.isActive === false)], group);
         }
+
+        setFilteredApiChecks(allFilteredChecks);
+    }
+
+    const filterByGroup = (apiChecks, group) => {
+        if (group !== 'All') {
+            return apiChecks?.filter(check => check?.group === group);
+        }
+        return apiChecks;
     }
 
     const handleFilter = (wordSearched) => {
@@ -239,6 +274,14 @@ const Dashboard = () => {
         setErrorModalVisible(false);
     }
 
+    const getAverageResponseTime = () => {
+        if (filteredApiChecks?.length > 0) {
+            const checksWithResponseTime = filteredApiChecks?.filter(filteredApiCheck => typeof (filteredApiCheck?.responseTime) === 'number');
+            return ((checksWithResponseTime.reduce((total, item) => total + item.responseTime, 0) / checksWithResponseTime.length) / 1000).toFixed(4)
+        }
+        return 0;
+    }
+
     return (
         <div>
 
@@ -248,6 +291,9 @@ const Dashboard = () => {
 
             {addNewApiModalVisualize &&
                 <AddNewApiModal
+                    groupOptions={groupOptions}
+                    selectedGroup={selectedGroup}
+                    setSelectedGroup={setSelectedGroup}
                     addNewApiModalVisualize={addNewApiModalVisualize}
                     setAddNewApiModalVisualize={setAddNewApiModalVisualize}
                     selectedApiCheckToEdit={selectedApiCheckToEdit}
@@ -307,7 +353,7 @@ const Dashboard = () => {
                 <div style={styles.cardStyle}>
                     <div style={styles.smallText}>Avg. Response Time (sec)</div>
                     <div style={styles.largeText}>
-                        {((filteredApiChecks.reduce((total, item) => total + item.responseTime, 0) / filteredApiChecks.length) / 1000).toFixed(4)}
+                        {getAverageResponseTime()}
                     </div>
                 </div>
             </div>
@@ -324,8 +370,24 @@ const Dashboard = () => {
                     <div style={{ width: '200px' }}>
                         <Select
                             onChange={(e) => {
+                                setSelectedGroup(e?.value);
+                                updateFilteredDataOnStatus(e.value, selectedStatus);
+                            }}
+                            value={groupOptions?.filter(group => group?.value === selectedGroup)?.[0]}
+                            options={groupOptions?.filter(group => group?.value !== 'Other')}
+                            menuPortalTarget={document.body}
+                            menuPlacement="auto"
+                            placeholder={'Select State'}
+                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                        />
+                        <div style={styles.smallText}>Select Group</div>
+                    </div>
+
+                    <div style={{ width: '200px' }}>
+                        <Select
+                            onChange={(e) => {
                                 setSelectedStatus(e.value);
-                                updateFilteredDataOnStatus(e.value);
+                                updateFilteredDataOnStatus(selectedGroup, e.value);
                             }}
                             options={checkStatusOptions}
                             value={checkStatusOptions?.filter(option => option?.value === selectedStatus)}
@@ -334,6 +396,7 @@ const Dashboard = () => {
                             placeholder={'Select State'}
                             styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                         />
+                        <div style={styles.smallText}>Select Status</div>
                     </div>
                 </div>
 

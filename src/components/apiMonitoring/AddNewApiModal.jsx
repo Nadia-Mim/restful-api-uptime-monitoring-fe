@@ -8,8 +8,8 @@ import ErrorTooltip from '../../components/common/ErrorTooltip/ErrorTooltip';
 import CircularAddIcon from '../../icons/CircularAddIcon.svg';
 import CircularMinusIcon from '../../icons/CircularMinusIcon.svg';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
-import SuccessModal from "../common/modals/successModal/SuccessModal";
 import ErrorModal from "../common/modals/errorModal/ErrorModal";
+import SuccessModal from "../common/modals/successModal/SuccessModal";
 
 const styles = {
     smallText: {
@@ -143,6 +143,7 @@ const statusCodeOptions = [
 ];
 
 const checkSampleData = {
+    group: '',
     protocol: '',
     url: '',
     method: '',
@@ -165,6 +166,7 @@ const AddNewApiModal = (props) => {
         validationSchema: Yup.object().shape({
             checks: Yup.array().of(
                 Yup.object().shape({
+                    group: Yup.string().required('Group Name is required'),
                     protocol: Yup.string().required('Protocol is required'),
                     url: Yup.string().required('URL is required'),
                     method: Yup.string().required('Method is required'),
@@ -203,7 +205,7 @@ const AddNewApiModal = (props) => {
     });
 
     useEffect(() => {
-        
+
         if (props?.selectedApiCheckToEdit && Object.keys(props?.selectedApiCheckToEdit)?.length > 0) {
             setPurpose('EDIT');
             setValues({
@@ -229,6 +231,16 @@ const AddNewApiModal = (props) => {
     const removeCheck = (index) => {
         let checkData = values?.checks;
         checkData.splice(index, 1);
+        setValues({
+            checks: [...checkData]
+        });
+    }
+
+    const updateGroupOfAllChecks = (group) => {
+        let checkData = values?.checks?.map(check => ({
+            ...check,
+            group
+        }))
         setValues({
             checks: [...checkData]
         });
@@ -261,6 +273,7 @@ const AddNewApiModal = (props) => {
     const actionOnSuccessModal = () => {
         props.setReload(!props?.reload);
         setSuccessModalVisible(false);
+        props.setSelectedGroup(values?.checks?.[0]?.group);
         closeModal();
     }
 
@@ -284,7 +297,38 @@ const AddNewApiModal = (props) => {
                 >
                     {purpose === 'ADD' ? 'Add New API Checks' : 'Edit API Check'}
                 </CustomModalHeader>
-                <CustomModalBody style={{ padding: '15px 5%' }}>
+                <CustomModalBody style={{ padding: '15px 5%', height: '82vh', overflowY: 'auto' }}>
+
+                    {/* Group */}
+                    <div style={{ marginBottom: '15px' }}>
+                        <div style={styles.smallText} className="required">Group Name</div>
+                        <div>
+                            <Select
+                                value={props?.groupOptions?.filter(clusterOption => clusterOption?.value === values?.checks?.[0].group)?.[0]}
+                                onChange={(e) => {
+                                    props.setSelectedGroup(e?.value);
+                                    updateGroupOfAllChecks(e.value === "Other" ? '' : e.value);
+                                }}
+                                options={props?.groupOptions?.filter(group => group?.value !== 'All')}
+                                menuPortalTarget={document.body}
+                                menuPlacement="auto"
+                                placeholder={'Select Group'}
+                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                            />
+                            {props?.selectedGroup === 'Other' &&
+                                <input
+                                    placeholder='Type New Group Name'
+                                    type="text"
+                                    style={{ ...styles.inputFieldStyle, marginTop: '20px' }}
+                                    value={values?.group}
+                                    onChange={(e) => updateGroupOfAllChecks(e.target.value)}
+                                />
+                            }
+                            {touched?.checks?.[0].group && errors?.checks?.[0].group && (
+                                <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[0].group} origin={`method`} /></span>
+                            )}
+                        </div>
+                    </div>
 
                     {values?.checks?.map((checkData, index) => {
                         return (
