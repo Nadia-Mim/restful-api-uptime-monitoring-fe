@@ -13,6 +13,7 @@ import DeleteModal from '../common/modals/deleteModal/DeleteModal'
 import ErrorModal from '../common/modals/errorModal/ErrorModal'
 import SuccessModal from '../common/modals/successModal/SuccessModal'
 import AddNewApiModal from './AddNewApiModal'
+import { useQuery } from 'react-query';
 
 
 const styles = {
@@ -162,11 +163,6 @@ const Dashboard = () => {
         }
     }, [reload])
 
-    useEffect(() => {
-        setInterval(() => {
-            getAllApiChecks();
-        }, 1000 * 60)
-    }, [])
 
     const getAllApiChecks = () => {
         getAllChecks(authData?.userId).then(response => {
@@ -180,6 +176,14 @@ const Dashboard = () => {
             }
         });
     }
+
+    const { data, isLoading, isError, refetch } = useQuery(
+        'apiCheckData',
+        getAllApiChecks,
+        {
+            refetchInterval: addNewApiModalVisualize ? false : 1000 * 60, // Refetch every 10 seconds if addNewApiModalVisualize is false
+        }
+    );
 
 
     const generateGroupOptions = (response) => {

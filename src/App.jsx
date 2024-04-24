@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import './App.css';
+import { AuthDetailsProvider } from './contexts/AuthContext';
 import './css/projectMain.css';
 import Routes from './routes';
-import { AuthDetailsProvider } from './contexts/AuthContext';
-
 
 function App() {
-
+    const queryClient = new QueryClient();
     const [authData, setAuthData] = useState('');
 
     useEffect(() => {
@@ -23,7 +23,9 @@ function App() {
                 setAuthData
             }}
         >
-            <Routes />
+            <QueryClientProvider client={queryClient}>
+                <Routes />
+            </QueryClientProvider>
         </AuthDetailsProvider>
     )
 }
