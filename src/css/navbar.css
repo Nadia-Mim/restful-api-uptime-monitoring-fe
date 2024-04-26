@@ -48,12 +48,17 @@
     margin-bottom: 5px;
 }
 
-/* .circle {
-    display: flex;
-    margin-left: 17px;
-    margin-top: -38px;
-    height: 40px;
-    width: 40px;
-    border: 4px solid red;
-    border-radius: 50%;
-} */
+
+.mobile-nav {
+    display: none;
+}
+
+@media screen and (max-width: 768px) {
+    .left-nav{
+        display: none;
+    }
+
+    .mobile-nav {
+        display: block;
+    }
+}

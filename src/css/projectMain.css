@@ -1,5 +1,6 @@
 @import url("./navbar.css");
 @import url("./scrollbar.css");
+@import url("./dashboard.css");
 
 input {
     color: #fff;

@@ -6,9 +6,11 @@ import GearBlue from '../../icons/GearBlue.svg';
 import User from '../../icons/User.svg';
 import UserBlue from '../../icons/UserBlue.svg';
 import Systech from '../../images/Systech.png';
+import MenuBarsIcon from '../../icons/MenuBarsIcon.svg';
 
 const Navbar = () => {
 
+    const [showMobileNav, setShowMobileNav] = useState(false);
     const [currentNavigation, setCurrentNavigation] = useState('Dashboard');
     const authContextConsumer = useContext(AuthContext);
     const navigate = useNavigate(); // To route to another page
@@ -19,16 +21,52 @@ const Navbar = () => {
         navigate('/login');
     }
 
+    const routeToDashboard = () => {
+        navigate('/dashboard');
+    }
+
+    const routeToUserProfile = () => {
+        navigate('/user');
+    }
+
     return (
         <div className='nav'>
             <div className='top-nav'>
                 <div>
-                    <img src={Systech} style={{ height: '80px', width: '80px', marginLeft: '-15px' }} />
+                    <img src={Systech} style={{ height: '80px', width: '80px', marginLeft: '-15px', cursor: 'pointer' }} onClick={() => routeToDashboard()} />
                 </div>
-                <div onClick={handleLogout} style={{ cursor: 'pointer' }}>
-                    <h3>Log Out</h3>
+                <div style={{ display: 'flex', gap: '25px' }}>
+                    <h3 style={{ cursor: 'pointer' }} onClick={handleLogout}>Log Out</h3>
+                    <img src={MenuBarsIcon} className='mobile-nav' onClick={() => setShowMobileNav(!showMobileNav)} />
                 </div>
             </div>
+
+            {showMobileNav &&
+                <div style={{ position: 'absolute', padding: '20px', background: 'rgba(30, 31, 38, 0.9)', width: '100%', boxShadow: '0 4px 8px rgba(74, 75, 81, 0.5)' }}>
+                    <div
+                        onClick={() => {
+                            setCurrentNavigation('Dashboard');
+                            routeToDashboard();
+                            setShowMobileNav(false);
+                        }}
+                        style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
+                    >
+                        <span className='icon'><img src={currentNavigation === 'Dashboard' ? GearBlue : Gear} style={{ height: '28px', width: '28px' }} /></span>
+                        API Check
+                    </div>
+                    <div
+                        onClick={() => {
+                            setCurrentNavigation('User');
+                            routeToUserProfile();
+                            setShowMobileNav(false);
+                        }}
+                        style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
+                    >
+                        <span className='icon'><img src={currentNavigation === 'User' ? UserBlue : User} style={{ height: '25px', width: '25px' }} /></span>
+                        Profile
+                    </div>
+                </div>
+            }
 
             <div className='left-nav'>
                 <ul>

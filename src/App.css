@@ -8,3 +8,10 @@ body {
   /* max-height: 70vh; */
   /* overflow-y: auto; */
 }
+
+@media screen and (max-width: 768px) {
+  .main-content {
+    margin-left: 0px; /* Adjust this value based on your navbar width */
+    padding: 20px; /* Add padding to the main content */
+  }
+}

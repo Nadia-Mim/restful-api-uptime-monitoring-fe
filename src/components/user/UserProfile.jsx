@@ -33,7 +33,8 @@ const styles = {
         width: '140px',
     },
     userInfo: {
-        fontWeight: 600
+        fontWeight: 600,
+        width: '250px'
     },
     blueButton: {
         background: '#4545E6',

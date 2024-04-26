@@ -17,19 +17,6 @@ import { useQuery } from 'react-query';
 
 
 const styles = {
-    cardStyle: {
-        background: '#1E1F26',
-        height: '15vh',
-        width: '18%',
-        minWidth: '35vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: '5px',
-        boxShadow: '0px 4px 1rem #000',
-        marginBottom: '15px'
-    },
     apiDetailsCard: {
         background: '#1E1F26',
         padding: '15px 20px',
@@ -56,7 +43,7 @@ const styles = {
         border: "1px solid rgba(130, 141, 153, 0.5)",
         borderRadius: "5px",
         padding: "8px",
-        width: "100%",
+        width: "95%",
         background: '#1E1F26',
         color: '#fff'
     },
@@ -341,27 +328,27 @@ const Dashboard = () => {
             }
 
             <div style={{ display: 'flex', gap: '2.5%', flexWrap: 'wrap', marginBottom: '30px' }}>
-                <div style={styles.cardStyle}>
+                <div className='cardStyle'>
                     <div style={styles.smallText}>Total API Count</div>
                     <div style={styles.largeText}>{allApiChecks?.length}</div>
                 </div>
 
-                <div style={styles.cardStyle}>
+                <div className='cardStyle'>
                     <div style={styles.smallText}>Currently Up</div>
                     <div style={styles.largeText}>{allApiChecks?.filter(apiCheck => apiCheck?.state === 'UP')?.length}</div>
                 </div>
 
-                <div style={styles.cardStyle}>
+                <div className='cardStyle'>
                     <div style={styles.smallText}>Currently Down</div>
                     <div style={styles.largeText}>{allApiChecks?.filter(apiCheck => apiCheck?.state === 'DOWN')?.length}</div>
                 </div>
 
-                <div style={styles.cardStyle}>
+                <div className='cardStyle'>
                     <div style={styles.smallText}>Currently Active</div>
                     <div style={styles.largeText}>{allApiChecks?.filter(apiCheck => apiCheck?.isActive === true)?.length}</div>
                 </div>
 
-                <div style={styles.cardStyle}>
+                <div className='cardStyle'>
                     <div style={styles.smallText}>Avg. Response Time (sec)</div>
                     <div style={styles.largeText}>
                         {getAverageResponseTime()}
@@ -369,8 +356,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', paddingRight: '15px' }}>
-                <div style={{ display: 'flex', gap: '15px' }}>
+            <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', paddingRight: '15px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginBottom: '15px' }}>
                     <div
                         style={styles.blueButton}
                         onClick={() => setAddNewApiModalVisualize(true)}
@@ -378,7 +365,7 @@ const Dashboard = () => {
                         + Create New API
                     </div>
 
-                    <div style={{ width: '200px' }}>
+                    <div className='small-screen-full-width'>
                         <Select
                             onChange={(e) => {
                                 setSelectedGroup(e?.value);
@@ -394,7 +381,7 @@ const Dashboard = () => {
                         <div style={styles.smallText}>Select Group</div>
                     </div>
 
-                    <div style={{ width: '200px' }}>
+                    <div className='small-screen-full-width'>
                         <Select
                             onChange={(e) => {
                                 setSelectedStatus(e.value);
@@ -412,7 +399,7 @@ const Dashboard = () => {
                 </div>
 
 
-                <div style={{ position: "relative" }}>
+                <div style={{ position: "relative"}} className='small-screen-full-width'>
                     <input
                         style={styles.searchButton}
                         placeholder="Search Here"
@@ -433,66 +420,73 @@ const Dashboard = () => {
                     filteredApiChecks?.map((apiCheckDetails, index) => {
                         return (
                             <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
-                                <div style={{ ...styles.flexBetween, flexWrap: 'wrap', marginBottom: '10px' }}>
-                                    <div style={{ width: '300px' }}>
+                                <div
+                                    // style={{ ...styles.flexBetween, flexWrap: 'wrap', marginBottom: '10px' }}
+                                    className='apiDetailsCardWrapper'
+                                >
+                                    <div className='apiCheckUrl'>
                                         <div style={styles.smallText}>URL</div>
                                         <div>{apiCheckDetails?.url}</div>
                                     </div>
 
-                                    <div style={{ width: '70px' }}>
-                                        <div style={styles.smallText}>State</div>
+                                    <div className='apiCheckContent'>
                                         <div>
-                                            {(apiCheckDetails?.isActive && apiCheckDetails?.state) ?
-                                                <span style={badgeColors[apiCheckDetails?.state]}>{apiCheckDetails?.state}</span>
-                                                :
-                                                'N/A'
-                                            }
+                                            <div style={styles.smallText}>State</div>
+                                            <div>
+                                                {(apiCheckDetails?.isActive && apiCheckDetails?.state) ?
+                                                    <span style={badgeColors[apiCheckDetails?.state]}>{apiCheckDetails?.state}</span>
+                                                    :
+                                                    'N/A'
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div style={styles.smallText}>Service Name</div>
+                                            <div>{apiCheckDetails?.serviceName || 'N/A'}</div>
+                                        </div>
+
+                                        <div>
+                                            <div style={styles.smallText}>Protocol</div>
+                                            <div>{apiCheckDetails?.protocol}</div>
                                         </div>
                                     </div>
 
-                                    <div style={{ width: '210px' }}>
-                                        <div style={styles.smallText}>Service Name</div>
-                                        <div>{apiCheckDetails?.serviceName || 'N/A'}</div>
-                                    </div>
+                                    <div className='apiCheckContent'>
+                                        <div style={{ width: '100px' }}>
+                                            <div style={styles.smallText}>Method</div>
+                                            <div>{apiCheckDetails?.method}</div>
+                                        </div>
 
-                                    <div style={{ width: '100px' }}>
-                                        <div style={styles.smallText}>Protocol</div>
-                                        <div>{apiCheckDetails?.protocol}</div>
-                                    </div>
+                                        <div style={{ width: '100px' }}>
+                                            <div style={styles.smallText}>Success Codes</div>
+                                            <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
+                                        </div>
 
-                                    <div style={{ width: '100px' }}>
-                                        <div style={styles.smallText}>Method</div>
-                                        <div>{apiCheckDetails?.method}</div>
-                                    </div>
-
-                                    <div style={{ width: '100px' }}>
-                                        <div style={styles.smallText}>Success Codes</div>
-                                        <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
-                                    </div>
-
-                                    <div style={{ width: '120px' }}>
-                                        <div style={styles.smallText}>Action</div>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <CustomToggleSwitch
-                                                origin={`api-state`}
-                                                disabled={false}
-                                                isChecked={apiCheckDetails?.isActive}
-                                                actionOnChange={(e) => updateApiCheckStatus(e.target.checked, apiCheckDetails)}
-                                            />
-                                            <img
-                                                src={EditIcon}
-                                                style={{ cursor: 'pointer' }}
-                                                alt='EditIcon'
-                                                onClick={() => {
-                                                    setSelectedApiCheckToEdit(apiCheckDetails);
-                                                    setAddNewApiModalVisualize(true);
-                                                }}
-                                            />
-                                            <img src={DeleteIcon}
-                                                style={{ cursor: 'pointer' }}
-                                                alt='DeleteIcon'
-                                                onClick={() => handleDeleteApiCheck(apiCheckDetails?._id)}
-                                            />
+                                        <div style={{ width: '120px' }}>
+                                            <div style={styles.smallText}>Action</div>
+                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                <CustomToggleSwitch
+                                                    origin={`api-state`}
+                                                    disabled={false}
+                                                    isChecked={apiCheckDetails?.isActive}
+                                                    actionOnChange={(e) => updateApiCheckStatus(e.target.checked, apiCheckDetails)}
+                                                />
+                                                <img
+                                                    src={EditIcon}
+                                                    style={{ cursor: 'pointer' }}
+                                                    alt='EditIcon'
+                                                    onClick={() => {
+                                                        setSelectedApiCheckToEdit(apiCheckDetails);
+                                                        setAddNewApiModalVisualize(true);
+                                                    }}
+                                                />
+                                                <img src={DeleteIcon}
+                                                    style={{ cursor: 'pointer' }}
+                                                    alt='DeleteIcon'
+                                                    onClick={() => handleDeleteApiCheck(apiCheckDetails?._id)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

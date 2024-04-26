@@ -24,7 +24,7 @@ const styles = {
     },
     loginWrapper: {
         height: '410px',
-        width: "390px",
+        width: "420px",
         backgroundColor: "#1E1F26",
         boxShadow: '0px 4px 1rem #000',
         fontSize: "1.8rem",
