@@ -1,8 +1,17 @@
+.user-info-show {
+    font-weight: 600;
+    word-wrap: break-word;
+    min-width: 250px;
+}
+
 .user-info-edit {
     width: 500px;
 }
 
 @media screen and (max-width: 768px) {
+    .user-info-show{
+        max-width: 250px;
+    }
     .user-info-edit {
         width: 100%;
     }

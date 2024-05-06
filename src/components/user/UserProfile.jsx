@@ -9,6 +9,8 @@ import { updateUserDetails } from "../../api/user/PUT";
 import ErrorTooltip from "../common/ErrorTooltip/ErrorTooltip";
 import SuccessModal from "../common/modals/successModal/SuccessModal";
 import ErrorModal from "../common/modals/errorModal/ErrorModal";
+import AddIcon from "../../icons/AddIcon.svg";
+import MinusIcon from "../../icons/MinusIcon.svg";
 
 const styles = {
     card: {
@@ -30,11 +32,10 @@ const styles = {
         fontWeight: 300,
     },
     userInfoTitle: {
-        width: '140px',
+        width: '150px',
     },
     userInfo: {
         fontWeight: 600,
-        width: '250px'
     },
     blueButton: {
         background: '#4545E6',
@@ -133,6 +134,31 @@ const UserProfile = () => {
         },
     });
 
+    const addAdditionalEmail = () => {
+        setValues({
+            ...values,
+            additionalEmails: values?.additionalEmails?.length > 0 ? [...values?.additionalEmails, ""] : [""]
+        })
+    }
+
+    const updateAdditionalEmail = (updatedValue, index) => {
+        const updatedAdditionalEmails = [...values.additionalEmails];
+        updatedAdditionalEmails[index] = updatedValue;
+        setValues({
+            ...values,
+            additionalEmails: updatedAdditionalEmails
+        });
+    }
+
+    const deleteAdditionalEmail = (index) => {
+        const updatedAdditionalEmails = [...values.additionalEmails];
+        updatedAdditionalEmails.splice(index, 1);
+        setValues({
+            ...values,
+            additionalEmails: updatedAdditionalEmails
+        });
+    };
+
     const actionOnSuccessModal = () => {
         setReload(!reload);
         setIsEditable(false);
@@ -143,6 +169,8 @@ const UserProfile = () => {
     const actionOnErrorModal = () => {
         setErrorModalVisible(false);
     }
+
+    console.log(values)
 
     return (
         <div>
@@ -254,6 +282,41 @@ const UserProfile = () => {
                         </div>
                     </div>
 
+                    {values?.additionalEmails?.length > 0 &&
+                        values?.additionalEmails?.map((additionalEmail, index) => {
+                            return (
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText}>Additional Email {index + 1}</div>
+                                    <div>
+                                        <input
+                                            placeholder='Type Additional Email'
+                                            type="text"
+                                            style={styles.inputFieldStyle}
+                                            value={additionalEmail}
+                                            onChange={(e) => updateAdditionalEmail(e.target.value, index)}
+                                        />
+                                    </div>
+                                    <div
+                                        style={{ marginBottom: '15px', color: 'blue', display: 'flex', gap: '10px', alignItems: 'center', cursor: 'pointer' }}
+                                        onClick={() => deleteAdditionalEmail(index)}
+                                    >
+                                        <img src={MinusIcon} />
+                                        Remove Email
+                                    </div>
+                                </div>
+                            )
+                        })
+                    }
+
+
+                    <div
+                        style={{ marginBottom: '15px', color: 'blue', display: 'flex', gap: '10px', alignItems: 'center', cursor: 'pointer' }}
+                        onClick={() => addAdditionalEmail()}
+                    >
+                        <img src={AddIcon} />
+                        Add Additional Email
+                    </div>
+
                     <div style={{ marginBottom: '15px' }}>
                         <div style={styles.smallText} className="required">Phone No.</div>
                         <div>
@@ -291,28 +354,37 @@ const UserProfile = () => {
                 <div>
                     <div style={{ display: 'flex', marginBottom: '25px' }}>
                         <div style={styles?.userInfoTitle}>User Id</div>
-                        <div style={styles.userInfo}>
+                        <div className='user-info-show'>
                             {userInfo?.userId ? `: ${userInfo?.userId}` : ': N/A'}
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', marginBottom: '25px' }}>
                         <div style={styles?.userInfoTitle}>User Name</div>
-                        <div style={styles.userInfo}>
+                        <div className='user-info-show'>
                             {`: ${userInfo?.firstName} ${userInfo?.lastName}`}
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', marginBottom: '25px' }}>
                         <div style={styles?.userInfoTitle}>Email</div>
-                        <div style={styles.userInfo}>
+                        <div className='user-info-show'>
                             {userInfo?.email ? `: ${userInfo?.email}` : 'N/A'}
                         </div>
                     </div>
 
+                    {userInfo?.additionalEmails?.length > 0 &&
+                        <div style={{ display: 'flex', marginBottom: '25px' }}>
+                            <div style={styles?.userInfoTitle}>Additional Emails</div>
+                            <div className='user-info-show'>
+                                {userInfo?.additionalEmails?.length && `: ${userInfo?.additionalEmails?.join(', ')}`}
+                            </div>
+                        </div>
+                    }
+
                     <div style={{ display: 'flex', marginBottom: '25px' }}>
                         <div style={styles?.userInfoTitle}>Phone No.</div>
-                        <div style={styles.userInfo}>
+                        <div className='user-info-show'>
                             {userInfo?.phone ? `: ${userInfo?.phone}` : 'N/A'}
                         </div>
                     </div>
