@@ -205,7 +205,7 @@ const UserProfile = () => {
 
             {/* User Details */}
             {isEditable ?
-                <div style={{ width: '500px' }}>
+                <div className="user-info-edit">
                     <div style={{ marginBottom: '15px' }}>
                         <div style={styles.smallText} className="required">First Name</div>
                         <div>

@@ -1,0 +1,9 @@
+.user-info-edit {
+    width: 500px;
+}
+
+@media screen and (max-width: 768px) {
+    .user-info-edit {
+        width: 100%;
+    }
+}

@@ -32,6 +32,10 @@
     width: 200px;
 }
 
+.largeScreenMarginRight{
+    margin-right: 5rem;
+}
+
 @media screen and (max-width: 768px) {
     .apiDetailsCardWrapper {
         display: flex;
@@ -55,6 +59,10 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
+    }
+
+    .largeScreenMarginRight{
+        margin-right: 0;
     }
 
     .small-screen-invisible{

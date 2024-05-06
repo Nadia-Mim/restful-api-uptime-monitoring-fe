@@ -34,8 +34,8 @@ const styles = {
     blueButton: {
         background: '#4545E6',
         height: '22px',
-        width: '150px',
-        padding: '8px',
+        width: '120px',
+        padding: '9px 14px',
         cursor: 'pointer',
         borderRadius: '5px'
     },
@@ -362,7 +362,7 @@ const Dashboard = () => {
                         style={styles.blueButton}
                         onClick={() => setAddNewApiModalVisualize(true)}
                     >
-                        + Create New API
+                        + Add New API
                     </div>
 
                     <div className='small-screen-full-width'>
@@ -429,7 +429,7 @@ const Dashboard = () => {
                                         <div>{apiCheckDetails?.url}</div>
                                     </div>
 
-                                    <div className='apiCheckContent'>
+                                    <div className='apiCheckContent largeScreenMarginRight'>
                                         <div>
                                             <div style={styles.smallText}>State</div>
                                             <div>
@@ -467,7 +467,7 @@ const Dashboard = () => {
                                             <div style={styles.smallText}>Action</div>
                                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                 <CustomToggleSwitch
-                                                    origin={`api-state`}
+                                                    origin={`api-state-${index}`}
                                                     disabled={false}
                                                     isChecked={apiCheckDetails?.isActive}
                                                     actionOnChange={(e) => updateApiCheckStatus(e.target.checked, apiCheckDetails)}
