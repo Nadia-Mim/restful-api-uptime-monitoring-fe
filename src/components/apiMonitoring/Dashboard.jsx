@@ -273,12 +273,11 @@ const Dashboard = () => {
     const getAverageResponseTime = () => {
         if (filteredApiChecks?.length > 0) {
             const checksWithResponseTime = filteredApiChecks?.filter(filteredApiCheck => typeof (filteredApiCheck?.responseTime) === 'number');
-            return ((checksWithResponseTime.reduce((total, item) => total + item.responseTime, 0) / checksWithResponseTime.length) / 1000).toFixed(4)
+            return (checksWithResponseTime.reduce((total, item) => total + item.responseTime, 0) / checksWithResponseTime.length).toFixed(4);
         }
         return 0;
     }
 
-    console.log(selectedGroup)
 
     return (
         <div>
@@ -349,7 +348,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className='cardStyle'>
-                    <div style={styles.smallText}>Avg. Response Time (sec)</div>
+                    <div style={styles.smallText}>Avg. Response Time (ms)</div>
                     <div style={styles.largeText}>
                         {getAverageResponseTime()}
                     </div>
@@ -399,7 +398,7 @@ const Dashboard = () => {
                 </div>
 
 
-                <div style={{ position: "relative"}} className='small-screen-full-width'>
+                <div style={{ position: "relative" }} className='small-screen-full-width'>
                     <input
                         style={styles.searchButton}
                         placeholder="Search Here"
