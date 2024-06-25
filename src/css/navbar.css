@@ -53,7 +53,16 @@
     display: none;
 }
 
+.logOutButton {
+    display: block;
+}
+
 @media screen and (max-width: 768px) {
+
+    .logOutButton {
+        display: none;
+    }
+
     .left-nav{
         display: none;
     }

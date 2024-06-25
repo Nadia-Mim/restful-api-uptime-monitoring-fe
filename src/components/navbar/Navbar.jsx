@@ -5,6 +5,8 @@ import Gear from '../../icons/Gear.svg';
 import GearBlue from '../../icons/GearBlue.svg';
 import User from '../../icons/User.svg';
 import UserBlue from '../../icons/UserBlue.svg';
+import ExitIcon from '../../icons/ExitIcon.svg';
+import ExitIconBlue from '../../icons/ExitIconBlue.svg';
 import Systech from '../../images/Systech.png';
 import MenuBarsIcon from '../../icons/MenuBarsIcon.svg';
 
@@ -36,7 +38,7 @@ const Navbar = () => {
                     <img src={Systech} style={{ height: '80px', width: '80px', marginLeft: '-15px', cursor: 'pointer' }} onClick={() => routeToDashboard()} />
                 </div>
                 <div style={{ display: 'flex', gap: '25px' }}>
-                    <h3 style={{ cursor: 'pointer' }} onClick={handleLogout}>Log Out</h3>
+                    <h3 style={{ cursor: 'pointer' }} className='logOutButton' onClick={handleLogout}>Log Out</h3>
                     <img src={MenuBarsIcon} className='mobile-nav' onClick={() => setShowMobileNav(!showMobileNav)} />
                 </div>
             </div>
@@ -64,6 +66,17 @@ const Navbar = () => {
                     >
                         <span className='icon'><img src={currentNavigation === 'User' ? UserBlue : User} style={{ height: '25px', width: '25px' }} /></span>
                         Profile
+                    </div>
+                    <div
+                        onClick={() => {
+                            setCurrentNavigation('Logout');
+                            handleLogout();
+                            setShowMobileNav(false);
+                        }}
+                        style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
+                    >
+                        <span className='icon'><img src={currentNavigation === 'Logout' ? ExitIconBlue : ExitIcon} style={{ height: '25px', width: '25px' }} /></span>
+                        Log Out
                     </div>
                 </div>
             }
