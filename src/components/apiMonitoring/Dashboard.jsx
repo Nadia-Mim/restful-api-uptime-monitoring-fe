@@ -273,7 +273,7 @@ const Dashboard = () => {
     const getAverageResponseTime = () => {
         if (filteredApiChecks?.length > 0) {
             const checksWithResponseTime = filteredApiChecks?.filter(filteredApiCheck => typeof (filteredApiCheck?.responseTime) === 'number');
-            return (checksWithResponseTime.reduce((total, item) => total + item.responseTime, 0) / checksWithResponseTime.length).toFixed(4);
+            return (checksWithResponseTime.reduce((total, item) => total + item.responseTime, 0) / checksWithResponseTime.length).toFixed(2);
         }
         return 0;
     }
