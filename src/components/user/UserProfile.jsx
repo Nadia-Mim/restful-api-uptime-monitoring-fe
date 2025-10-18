@@ -38,18 +38,18 @@ const styles = {
         fontWeight: 600,
     },
     blueButton: {
-        background: '#4545E6',
+        background: 'transparent',
         width: '130px',
         padding: '10px',
         cursor: 'pointer',
-        borderRadius: '5px'
+        borderRadius: '10px'
     },
     redButton: {
-        background: '#F52D2D',
+        background: 'transparent',
         width: '55px',
         padding: '10px',
         cursor: 'pointer',
-        borderRadius: '5px'
+        borderRadius: '10px'
     },
     editIconStyle: {
         height: '20px',
@@ -65,10 +65,9 @@ const styles = {
     },
     inputFieldStyle: {
         width: '97%',
-        // height: '25px',
-        border: "1px solid rgba(130, 141, 153, 0.5)",
-        borderRadius: "5px",
-        background: '#1E1F26',
+        border: "1px solid rgba(255, 255, 255, 0.14)",
+        borderRadius: "10px",
+        background: 'rgba(255,255,255,0.03)',
         padding: "8px",
         fontSize: '17px',
         fontWeight: 300,
@@ -204,7 +203,7 @@ const UserProfile = () => {
 
 
             <div style={{ marginBottom: '25px' }}>
-                <div style={styles.card}>
+                <div style={styles.card} className="glass-panel">
                     <span style={{ fontSize: '35px', fontWeight: 600, marginLeft: '25px' }}>
                         {`${userInfo?.firstName} ${userInfo?.lastName}`}
                     </span>
@@ -218,6 +217,7 @@ const UserProfile = () => {
                     <div>
                         <div
                             style={{ ...styles.blueButton, width: '90px' }}
+                            className="glass-button-primary"
                             onClick={() => {
                                 setValues({ ...userInfo });
                                 setIsEditable(true);
@@ -233,11 +233,12 @@ const UserProfile = () => {
 
             {/* User Details */}
             {isEditable ?
-                <div className="user-info-edit">
+                <div className="user-info-edit glass-card" style={{ padding: '16px' }}>
                     <div style={{ marginBottom: '15px' }}>
                         <div style={styles.smallText} className="required">First Name</div>
                         <div>
                             <input
+                                className="glass-input"
                                 placeholder='Type First Name'
                                 type="text"
                                 style={styles.inputFieldStyle}
@@ -254,6 +255,7 @@ const UserProfile = () => {
                         <div style={styles.smallText} className="required">Last Name</div>
                         <div>
                             <input
+                                className="glass-input"
                                 placeholder='Type Last Name'
                                 type="text"
                                 style={styles.inputFieldStyle}
@@ -270,6 +272,7 @@ const UserProfile = () => {
                         <div style={styles.smallText} className="required">Email</div>
                         <div>
                             <input
+                                className="glass-input"
                                 placeholder='Type Email'
                                 type="text"
                                 style={styles.inputFieldStyle}
@@ -289,6 +292,7 @@ const UserProfile = () => {
                                     <div style={styles.smallText}>Additional Email {index + 1}</div>
                                     <div>
                                         <input
+                                            className="glass-input"
                                             placeholder='Type Additional Email'
                                             type="text"
                                             style={styles.inputFieldStyle}
@@ -321,6 +325,7 @@ const UserProfile = () => {
                         <div style={styles.smallText} className="required">Phone No.</div>
                         <div>
                             <input
+                                className="glass-input"
                                 placeholder='Type Phone'
                                 type="text"
                                 style={styles.inputFieldStyle}
@@ -337,6 +342,7 @@ const UserProfile = () => {
 
                         <div
                             style={{ ...styles.redButton, marginRight: '15px' }}
+                            className="glass-button-danger"
                             onClick={() => setIsEditable(false)}
                         >
                             Cancel
@@ -344,6 +350,7 @@ const UserProfile = () => {
 
                         <div
                             style={{ ...styles.blueButton, width: '105px' }}
+                            className="glass-button-primary"
                             onClick={handleSubmit}
                         >
                             Update User
@@ -392,6 +399,7 @@ const UserProfile = () => {
                     <div>
                         <div
                             style={styles.blueButton}
+                            className="glass-button-primary"
                             onClick={() => setResetPassModalVisualize(true)}
                         >
                             Reset Password

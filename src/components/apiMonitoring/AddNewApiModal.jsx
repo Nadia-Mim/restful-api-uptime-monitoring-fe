@@ -16,6 +16,11 @@ const styles = {
         fontSize: '12px',
         fontWeight: 300,
     },
+    iconSmall: {
+        height: '20px',
+        width: '20px',
+        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))'
+    },
     blueButton: {
         background: '#4545E6',
         padding: '10px',
@@ -80,7 +85,7 @@ const methodOptions = [
     { label: 'GET', value: 'GET' },
     { label: 'POST', value: 'POST' },
     { label: 'PUT', value: 'PUT' },
-    { label: 'DELETE', value: 'POST' }
+    { label: 'DELETE', value: 'DELETE' }
 ]
 
 const statusCodeOptions = [
@@ -451,7 +456,7 @@ const AddNewApiModal = React.memo((props) => {
 
                                 {values?.checks?.length > 1 &&
                                     <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', width: '200px' }} onClick={() => removeCheck(index)}>
-                                        <img src={CircularMinusIcon} alt='Minus Icon' /> &nbsp;&nbsp;
+                                        <img src={CircularMinusIcon} alt='Minus Icon' style={styles.iconSmall} /> &nbsp;&nbsp;
                                         <span>Remove API Check</span>
                                     </div>
                                 }
@@ -461,7 +466,7 @@ const AddNewApiModal = React.memo((props) => {
 
                     {purpose === 'ADD' &&
                         <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', width: '200px' }} onClick={() => addMoreApiCheck()}>
-                            <img src={CircularAddIcon} alt='Add Icon' /> &nbsp;&nbsp;
+                            <img src={CircularAddIcon} alt='Add Icon' style={styles.iconSmall} /> &nbsp;&nbsp;
                             <span>Add More API Check</span>
                         </div>
                     }

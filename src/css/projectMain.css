@@ -7,7 +7,70 @@ input {
     color: #fff;
 }
 
-label.required::after, div.required::after {
+/* Dark glass theme variables and utilities */
+:root {
+    --bg: #18191E;
+    --text: #ffffff;
+    --muted: rgba(255, 255, 255, 0.7);
+    --accent: #4545E6;
+    --danger: #F52D2D;
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-bg-strong: rgba(255, 255, 255, 0.1);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.16);
+    --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --glass-blur: 12px;
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: 12px;
+}
+
+.glass-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: 14px;
+}
+
+.glass-input {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: var(--text);
+    border-radius: 10px;
+    outline: none;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.glass-input:focus {
+    border-color: rgba(69, 69, 230, 0.6);
+    box-shadow: 0 0 0 3px rgba(69, 69, 230, 0.2);
+}
+
+.glass-button-primary {
+    background: linear-gradient(180deg, rgba(69, 69, 230, 0.85), rgba(69, 69, 230, 0.7));
+    border: 1px solid rgba(69, 69, 230, 0.6);
+    color: var(--text);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(69, 69, 230, 0.35);
+}
+
+.glass-button-danger {
+    background: linear-gradient(180deg, rgba(245, 45, 45, 0.85), rgba(245, 45, 45, 0.7));
+    border: 1px solid rgba(245, 45, 45, 0.6);
+    color: var(--text);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(245, 45, 45, 0.35);
+}
+
+label.required::after,
+div.required::after {
     color: red;
     content: ' *';
     display: inline;

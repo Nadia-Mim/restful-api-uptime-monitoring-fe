@@ -18,10 +18,9 @@ import { useQuery } from 'react-query';
 
 const styles = {
     apiDetailsCard: {
-        background: '#1E1F26',
+        background: '#1E1F2600',
         padding: '15px 20px',
-        marginBottom: '20px',
-        boxShadow: '0px 4px 1rem #000'
+        marginBottom: '20px'
     },
     largeText: {
         fontSize: '35px',
@@ -326,7 +325,7 @@ const Dashboard = () => {
                 />
             }
 
-            <div style={{ display: 'flex', gap: '2.5%', flexWrap: 'wrap', marginBottom: '30px' }}>
+            <div style={{ display: 'flex', gap: '2%', flexWrap: 'wrap', marginBottom: '30px' }}>
                 <div className='cardStyle'>
                     <div style={styles.smallText}>Total API Count</div>
                     <div style={styles.largeText}>{allApiChecks?.length}</div>
@@ -401,6 +400,7 @@ const Dashboard = () => {
                 <div style={{ position: "relative" }} className='small-screen-full-width'>
                     <input
                         style={styles.searchButton}
+                        className='glass-input'
                         placeholder="Search Here"
                         value={searchedWord}
                         onChange={(e) => handleFilter(e.target.value)}
@@ -418,7 +418,7 @@ const Dashboard = () => {
                 {filteredApiChecks?.length > 0 ?
                     filteredApiChecks?.map((apiCheckDetails, index) => {
                         return (
-                            <div style={styles.apiDetailsCard} key={`apiDetail-${index}`}>
+                            <div style={styles.apiDetailsCard} className='api-details-card' key={`apiDetail-${index}`}>
                                 <div
                                     // style={{ ...styles.flexBetween, flexWrap: 'wrap', marginBottom: '10px' }}
                                     className='apiDetailsCardWrapper'
