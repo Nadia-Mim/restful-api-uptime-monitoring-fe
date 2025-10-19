@@ -13,6 +13,7 @@ const SignUp = React.lazy(() => import('./components/login/SignUp'));
 const Dashboard = React.lazy(() => import('./components/apiMonitoring/Dashboard'));
 const ApiDetails = React.lazy(() => import('./components/apiMonitoring/ApiDetails'));
 const UserProfile = React.lazy(() => import('./components/user/UserProfile'));
+const Settings = React.lazy(() => import('./components/settings/Settings'));
 
 let authData = JSON.parse(localStorage.getItem('authData'));
 
@@ -34,6 +35,7 @@ const routes = () => {
                                     <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
                                     <Route exact path='/check/:id' name="ApiDetails" element={<ApiDetails />} />
                                     <Route exact path='/user' name="User" element={<UserProfile />} />
+                                    <Route exact path='/settings' name="Settings" element={<Settings />} />
                                 </>
                             }
 
