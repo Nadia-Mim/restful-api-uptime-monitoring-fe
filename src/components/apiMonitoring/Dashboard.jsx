@@ -5,6 +5,8 @@ import { getAllChecks } from '../../api/apiChecks/GET'
 import { updateCheck } from '../../api/apiChecks/PUT'
 import DeleteIcon from '../../icons/DeleteIcon.svg'
 import EditIcon from '../../icons/EditIcon.svg'
+import DetailsIcon from '../../icons/DetailsIcon.svg'
+import { useNavigate } from 'react-router-dom'
 import SearchIcon from '../../icons/SearchIcon.svg'
 import CustomToggleSwitch from '../common/customSwitch/CustomToggleSwitch'
 import EmptyScreen from '../common/emptyScreen/EmptyScreen'
@@ -113,6 +115,7 @@ let arr = [1, 2, 3, 4, 5, 6]
 const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
 
 const Dashboard = () => {
+    const navigate = useNavigate();
 
     const [groupOptions, setGroupOptions] = useState(dummyGroups);
     const [selectedGroup, setSelectedGroup] = useState('All');
@@ -462,9 +465,9 @@ const Dashboard = () => {
                                             <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
                                         </div>
 
-                                        <div style={{ width: '120px' }}>
+                                        <div style={{ width: '160px' }}>
                                             <div style={styles.smallText}>Action</div>
-                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                                 <CustomToggleSwitch
                                                     origin={`api-state-${index}`}
                                                     disabled={false}
@@ -478,6 +481,14 @@ const Dashboard = () => {
                                                     onClick={() => {
                                                         setSelectedApiCheckToEdit(apiCheckDetails);
                                                         setAddNewApiModalVisualize(true);
+                                                    }}
+                                                />
+                                                <img
+                                                    src={DetailsIcon}
+                                                    style={{ cursor: 'pointer', height: '18px', width: '18px' }}
+                                                    alt='DetailsIcon'
+                                                    onClick={() => {
+                                                        navigate(`/check/${apiCheckDetails?._id}`, { state: { check: apiCheckDetails } });
                                                     }}
                                                 />
                                                 <img src={DeleteIcon}

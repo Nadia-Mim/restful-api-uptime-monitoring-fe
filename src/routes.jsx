@@ -11,6 +11,7 @@ import AuthContext from './contexts/AuthContext';
 const Login = React.lazy(() => import('./components/login/Login'));
 const SignUp = React.lazy(() => import('./components/login/SignUp'));
 const Dashboard = React.lazy(() => import('./components/apiMonitoring/Dashboard'));
+const ApiDetails = React.lazy(() => import('./components/apiMonitoring/ApiDetails'));
 const UserProfile = React.lazy(() => import('./components/user/UserProfile'));
 
 let authData = JSON.parse(localStorage.getItem('authData'));
@@ -31,6 +32,7 @@ const routes = () => {
                             {(authContextConsumer?.authData?.expires > Date.now()) &&
                                 <>
                                     <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
+                                    <Route exact path='/check/:id' name="ApiDetails" element={<ApiDetails />} />
                                     <Route exact path='/user' name="User" element={<UserProfile />} />
                                 </>
                             }
