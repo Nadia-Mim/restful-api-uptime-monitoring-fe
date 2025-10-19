@@ -69,6 +69,106 @@ input {
     box-shadow: 0 6px 18px rgba(245, 45, 45, 0.35);
 }
 
+.glass-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.glass-badge.success {
+    border-color: rgba(51, 219, 41, 0.5);
+    color: #c8ffcc;
+}
+
+.glass-badge.danger {
+    border-color: rgba(245, 45, 45, 0.5);
+    color: #ffd2d2;
+}
+
+/* Fancy glass utilities for details page */
+.glass-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: var(--glass-border);
+    background: linear-gradient(135deg, rgba(69, 69, 230, 0.12), rgba(255, 255, 255, 0.06));
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur));
+}
+
+.pill {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.pill.active {
+    background: rgba(69, 69, 230, 0.25);
+    border-color: rgba(69, 69, 230, 0.6);
+}
+
+.stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 12px;
+}
+
+.stat-chip .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot.accent {
+    background: #4545E6;
+}
+
+.dot.good {
+    background: #33DB29;
+}
+
+.dot.warn {
+    background: #F9B84E;
+}
+
+.dot.bad {
+    background: #F52D2D;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+}
+
+.chart-grid line {
+    stroke: rgba(255, 255, 255, 0.08);
+}
+
+.chart-axis {
+    fill: rgba(255, 255, 255, 0.7);
+    font-size: 10px;
+}
+
 label.required::after,
 div.required::after {
     color: red;
