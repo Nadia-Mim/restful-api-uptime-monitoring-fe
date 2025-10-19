@@ -7,8 +7,8 @@ import DashboardIcon from '../../icons/Dashboard.svg';
 import DashboardBlueIcon from '../../icons/DashboardBlue.svg';
 import User from '../../icons/User.svg';
 import UserBlue from '../../icons/UserBlue.svg';
-import ExitIcon from '../../icons/ExitIcon.svg';
-import ExitIconBlue from '../../icons/ExitIconBlue.svg';
+import LogoutIcon from '../../icons/Logout.svg';
+import LogoutRedIcon from '../../icons/LogoutRed.svg';
 import Systech from '../../images/Systech.png';
 import MenuBarsIcon from '../../icons/MenuBarsIcon.svg';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -56,8 +56,27 @@ const Navbar = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: 18 }}>{pageTitle}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <h3 style={{ cursor: 'pointer' }} className='logOutButton' onClick={handleLogout}>Log Out</h3>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                    {/* User icon button */}
+                    <img
+                        src={currentNavigation === 'User' ? UserBlue : User}
+                        className='topbar-icon'
+                        style={{ height: '24px', width: '24px' }}
+                        alt='User'
+                        onClick={routeToUserProfile}
+                        onMouseEnter={(e) => { e.currentTarget.src = UserBlue; }}
+                        onMouseLeave={(e) => { e.currentTarget.src = (currentNavigation === 'User' ? UserBlue : User); }}
+                    />
+                    {/* Logout icon button */}
+                    <img
+                        src={LogoutIcon}
+                        className='topbar-icon'
+                        alt='Log out'
+                        title='Log out'
+                        onClick={handleLogout}
+                        onMouseEnter={(e) => { e.currentTarget.src = LogoutRedIcon; }}
+                        onMouseLeave={(e) => { e.currentTarget.src = LogoutIcon; }}
+                    />
                     <img src={MenuBarsIcon} className='mobile-nav' onClick={() => setShowMobileNav(!showMobileNav)} />
                 </div>
             </div>
@@ -105,7 +124,7 @@ const Navbar = () => {
                         }}
                         style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
                     >
-                        <span className='icon'><img src={currentNavigation === 'Logout' ? ExitIconBlue : ExitIcon} style={{ height: '25px', width: '25px' }} /></span>
+                        <span className='icon'><img src={currentNavigation === 'Logout' ? LogoutRedIcon : LogoutIcon} style={{ height: '25px', width: '25px' }} /></span>
                         Log Out
                     </div>
                 </div>
@@ -125,12 +144,7 @@ const Navbar = () => {
                             <span className='circle'></span>
                         </Link>
                     </li>
-                    <li onClick={() => setCurrentNavigation('User')}>
-                        <Link to="/user">
-                            <span className='icon'><img src={currentNavigation === 'User' ? UserBlue : User} style={{ height: '25px', width: '25px' }} /></span>
-                            <span className='circle'></span>
-                        </Link>
-                    </li>
+                    {/* User option removed from left navbar as requested */}
                 </ul>
             </div>
         </div>

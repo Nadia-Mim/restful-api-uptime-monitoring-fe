@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import getSettings from '../../api/settings/GET';
 import putSettings from '../../api/settings/PUT';
+import SuccessModal from '../common/modals/successModal/SuccessModal';
 
 const Settings = () => {
     const queryClient = useQueryClient();
@@ -10,6 +11,8 @@ const Settings = () => {
 
     const { data } = useQuery(['settings', userId], () => getSettings({ userId }), { enabled: !!userId });
     const [ttl, setTtl] = useState(24);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [message, setMessage] = useState('');
     useEffect(() => {
         if (data?.ttlHours) setTtl(Number(data.ttlHours));
     }, [data]);
@@ -17,11 +20,24 @@ const Settings = () => {
     const mutation = useMutation((payload) => putSettings(payload), {
         onSuccess: () => {
             queryClient.invalidateQueries(['settings', userId]);
+            setMessage('Settings saved successfully.');
+            setSuccessModalVisible(true);
         }
     });
 
+    const actionOnSuccessModal = () => {
+        setSuccessModalVisible(false);
+    };
+
     return (
         <div>
+            {successModalVisible && (
+                <SuccessModal
+                    modalVisible={successModalVisible}
+                    actionOnSuccessModal={actionOnSuccessModal}
+                    message={message || 'Settings saved successfully.'}
+                />
+            )}
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                     <div style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Health Log Retention (TTL):</div>

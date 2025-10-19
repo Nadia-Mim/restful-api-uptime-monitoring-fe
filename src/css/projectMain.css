@@ -102,6 +102,20 @@ input {
     backdrop-filter: blur(var(--glass-blur));
 }
 
+/* topbar action icons */
+.topbar-icon {
+    height: 26px;
+    width: 26px;
+    cursor: pointer;
+    transition: transform 120ms ease, opacity 120ms ease;
+    opacity: 0.9;
+}
+
+.topbar-icon:hover {
+    transform: translateY(-1px) scale(1.03);
+    opacity: 1;
+}
+
 .pill {
     border: 1px solid rgba(255, 255, 255, 0.18);
     padding: 6px 10px;
