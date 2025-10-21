@@ -3,6 +3,7 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { getAllChecks } from '../../api/apiChecks/GET';
 import getHealthLogs from '../../api/health/GET';
+import Loader from '../common/loader/Loader';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 
@@ -71,64 +72,84 @@ const AreaChart = ({ data, width = 700, height = 220, color = '#4545E6', ticks =
 };
 
 const ApiDetails = () => {
+    // Router helpers
     const location = useLocation();
     const navigate = useNavigate();
     const { id } = useParams();
 
-    const stateCheck = location?.state?.check || null;
+    // State
+    // Timeframe in minutes for chart/log filtering (default: 60m)
+    const [minutes, setMinutes] = useState(60);
+    // Toggle for showing the recent status badge list
+    const [showStatus, setShowStatus] = useState(false);
 
-    const { data: checksResp } = useQuery(
-        ['checks'],
-        () => getAllChecks(JSON.parse(localStorage.authData || '{}')?.userId),
-        { enabled: !stateCheck }
+    // Data loading (react-query) and loader mapping
+    const stateCheck = location?.state?.check || null; // If navigated from Dashboard, we may already have the check
+
+    // Query: fetch all checks for this user IF we don't already have the check from router state
+    const userId = (() => {
+        try { return JSON.parse(localStorage.getItem('authData') || '{}')?.userId; } catch (_) { return undefined; }
+    })();
+
+    const { data: checksResponse, isLoading: isLoadingChecks } = useQuery(
+        ['checks', userId],
+        () => getAllChecks(userId),
+        { enabled: !stateCheck && !!userId }
     );
 
+    // Derive target check: prefer router state, otherwise locate by id from fetched list
     const check = useMemo(() => {
         if (stateCheck) return stateCheck;
-        const checks = checksResp?.[0] || [];
-        return checks.find((c) => c?._id === id);
-    }, [stateCheck, checksResp, id]);
+        const checks = checksResponse?.[0] || [];
+        return checks.find((chk) => chk?._id === id);
+    }, [stateCheck, checksResponse, id]);
 
-    // timeframe state in minutes
-    const [minutes, setMinutes] = useState(60);
-
-    const { data: logs } = useQuery(
+    // Query: fetch health logs for this check id
+    const { data: healthLogs, isLoading: isLoadingLogs } = useQuery(
         ['health', id],
         () => getHealthLogs({ checkId: id, limit: 500 }),
         { enabled: !!id }
     );
 
-    const toTs = (v) => {
-        if (!v && v !== 0) return 0;
-        if (typeof v === 'number') return v;
-        const t = Date.parse(v);
+    // Global loader for this screen
+    const showLoader = isLoadingChecks || isLoadingLogs;
+
+    // Helpers
+    const toEpochMs = (value) => {
+        if (!value && value !== 0) return 0;
+        if (typeof value === 'number') return value;
+        const t = Date.parse(value);
         return Number.isNaN(t) ? 0 : t;
     };
 
+    // Derived data from logs
     const filteredLogs = useMemo(() => {
-        if (!logs?.length) return [];
+        if (!healthLogs?.length) return [];
         const cutoff = Date.now() - minutes * 60 * 1000;
-        return logs.filter((l) => toTs(l.timestamp) >= cutoff);
-    }, [logs, minutes]);
+        return healthLogs.filter((log) => toEpochMs(log.timestamp) >= cutoff);
+    }, [healthLogs, minutes]);
 
     const points = useMemo(() => {
         if (!filteredLogs?.length) return [];
-        const sorted = [...filteredLogs].sort((a, b) => toTs(a.timestamp) - toTs(b.timestamp));
-        return sorted.map((l) => [toTs(l.timestamp), Number(l.responseTime || 0)]);
+        const sorted = [...filteredLogs].sort((a, b) => toEpochMs(a.timestamp) - toEpochMs(b.timestamp));
+        return sorted.map((log) => [toEpochMs(log.timestamp), Number(log.responseTime || 0)]);
     }, [filteredLogs]);
 
-    const latest = logs?.[0] || null;
-    const latestOk = latest ? latest.state === 'UP' : (check?.state === 'UP');
+    const latestLog = healthLogs?.[0] || null;
+    const latestIsUp = latestLog ? latestLog.state === 'UP' : (check?.state === 'UP');
 
-    const [showStatus, setShowStatus] = useState(false);
-    const upCount = filteredLogs.filter((l) => l.state === 'UP').length;
+    const upCount = filteredLogs.filter((log) => log.state === 'UP').length;
     const downCount = filteredLogs.length - upCount;
 
+    // Render
     return (
         <div>
+            {/* Page-level loader */}
+            {showLoader && <Loader />}
+            {/* Header / Toolbar */}
             <div className="glass-toolbar" style={{ marginBottom: 16 }}>
                 <div style={{ fontWeight: 700, fontSize: 18 }}>{check?.serviceName || check?.url || 'API Details'}</div>
-                {latestOk !== undefined && <Badge ok={latestOk}>{latestOk ? 'UP' : 'DOWN'}</Badge>}
+                {latestIsUp !== undefined && <Badge ok={latestIsUp}>{latestIsUp ? 'UP' : 'DOWN'}</Badge>}
                 <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
                     {[15, 60, 180, 1440].map((m) => (
                         <div key={m} className={`pill ${minutes === m ? 'active' : ''}`} onClick={() => setMinutes(m)}>
@@ -145,6 +166,7 @@ const ApiDetails = () => {
                 </div>
             </div>
 
+            {/* Check properties */}
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px', display: 'grid', gridTemplateColumns: '180px 1fr', gap: 12 }}>
                 <div style={{ opacity: 0.8 }}>ID</div>
                 <div style={{ fontWeight: 600 }}>{check?._id || id}</div>
@@ -155,11 +177,25 @@ const ApiDetails = () => {
                 <div style={{ opacity: 0.8 }}>Protocol</div>
                 <div>{check?.protocol}</div>
 
-                <div style={{ opacity: 0.8 }}>Method</div>
-                <div>{check?.method}</div>
+                {(check?.protocol === 'http' || check?.protocol === 'https') && <>
+                    <div style={{ opacity: 0.8 }}>Method</div>
+                    <div>{check?.method}</div>
 
-                <div style={{ opacity: 0.8 }}>Success Codes</div>
-                <div>{Array.isArray(check?.successCodes) ? check.successCodes.join(', ') : 'N/A'}</div>
+                    <div style={{ opacity: 0.8 }}>Success Codes</div>
+                    <div>{Array.isArray(check?.successCodes) ? check.successCodes.join(', ') : 'N/A'}</div>
+                </>}
+
+                {check?.protocol === 'tcp' && <>
+                    <div style={{ opacity: 0.8 }}>TCP Port</div>
+                    <div>{check?.port || '—'}</div>
+                </>}
+
+                {check?.protocol === 'dns' && <>
+                    <div style={{ opacity: 0.8 }}>DNS Type</div>
+                    <div>{check?.dnsRecordType || '—'}</div>
+                    <div style={{ opacity: 0.8 }}>Expected Value</div>
+                    <div>{check?.expectedDnsValue || '—'}</div>
+                </>}
 
                 <div style={{ opacity: 0.8 }}>Timeout (sec)</div>
                 <div>{check?.timeoutSeconds}</div>
@@ -171,6 +207,7 @@ const ApiDetails = () => {
                 <div>{check?.isActive ? 'Yes' : 'No'}</div>
             </div>
 
+            {/* Health tracking chart */}
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontWeight: 600, marginBottom: 8 }}>Health Tracking (Response Time)</div>
@@ -206,33 +243,34 @@ const ApiDetails = () => {
                 <AreaChart data={points} />
             </div>
 
-            {/* Latest response summary, including statusCode, responseTime, alert and error if any */}
+            {/* Latest response summary (statusCode, responseTime, alert, error) */}
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                     <div style={{ fontWeight: 600 }}>Latest Response</div>
-                    {latest && (
+                    {latestLog && (
                         <>
-                            <div className="stat-chip"><span className="dot accent"></span>{new Date(toTs(latest.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                            {'statusCode' in latest && (
-                                <div className="stat-chip"><span className="dot good"></span>Status {latest.statusCode ?? '—'}</div>
+                            <div className="stat-chip"><span className="dot accent"></span>{new Date(toEpochMs(latestLog.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                            {'statusCode' in latestLog && (
+                                <div className="stat-chip"><span className="dot good"></span>Status {latestLog.statusCode ?? '\u2014'}</div>
                             )}
-                            {'responseTime' in latest && (
-                                <div className="stat-chip"><span className="dot warn"></span>{Number(latest.responseTime || 0)}ms</div>
+                            {'responseTime' in latestLog && (
+                                <div className="stat-chip"><span className="dot warn"></span>{Number(latestLog.responseTime || 0)}ms</div>
                             )}
-                            {'isAlertTriggered' in latest && (
-                                <div className="stat-chip"><span className={`dot ${latest.isAlertTriggered ? 'bad' : 'good'}`}></span>{latest.isAlertTriggered ? 'Alert fired' : 'No alert'}</div>
+                            {'isAlertTriggered' in latestLog && (
+                                <div className="stat-chip"><span className={`dot ${latestLog.isAlertTriggered ? 'bad' : 'good'}`}></span>{latestLog.isAlertTriggered ? 'Alert fired' : 'No alert'}</div>
                             )}
                         </>
                     )}
                 </div>
-                {latest?.error && (
+                {latestLog?.error && (
                     <div className="glass-badge danger" style={{ display: 'inline-block', padding: '6px 10px', borderRadius: 10 }}>
-                        Error: {String(latest.error)}
+                        Error: {String(latestLog.error)}
                     </div>
                 )}
-                {!latest && <div style={{ opacity: 0.7 }}>No recent data</div>}
+                {!latestLog && <div style={{ opacity: 0.7 }}>No recent data</div>}
             </div>
 
+            {/* Recent status badge list */}
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                     <div style={{ fontWeight: 600 }}>Recent Status</div>
@@ -244,15 +282,15 @@ const ApiDetails = () => {
                 </div>
                 {showStatus && (
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {(filteredLogs || []).slice(0, 24).map((l) => (
+                        {(filteredLogs || []).slice(0, 24).map((log) => (
                             <span
-                                key={String(l._id) + String(l.timestamp)}
-                                className={`glass-badge ${l.state === 'UP' ? 'success' : 'danger'}`}
+                                key={String(log._id) + String(log.timestamp)}
+                                className={`glass-badge ${log.state === 'UP' ? 'success' : 'danger'}`}
                                 data-tooltip-id="status-detail"
-                                data-tooltip-content={`Time: ${new Date(toTs(l.timestamp)).toLocaleString()}\nStatus: ${l.statusCode ?? '—'}\nResp: ${Number(l.responseTime || 0)}ms${l.isAlertTriggered ? '\nAlert: triggered' : ''}${l.error ? `\nError: ${String(l.error)}` : ''}`}
+                                data-tooltip-content={`Time: ${new Date(toEpochMs(log.timestamp)).toLocaleString()}\nStatus: ${log.statusCode ?? '\u2014'}\nResp: ${Number(log.responseTime || 0)}ms${log.isAlertTriggered ? '\nAlert: triggered' : ''}${log.error ? `\nError: ${String(log.error)}` : ''}`}
                                 style={{ whiteSpace: 'pre' }}
                             >
-                                {l.state} · {new Date(toTs(l.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {log.state} \u00b7 {new Date(toEpochMs(log.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         ))}
                     </div>

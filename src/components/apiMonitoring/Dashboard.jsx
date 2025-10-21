@@ -15,7 +15,7 @@ import DeleteModal from '../common/modals/deleteModal/DeleteModal'
 import ErrorModal from '../common/modals/errorModal/ErrorModal'
 import SuccessModal from '../common/modals/successModal/SuccessModal'
 import AddNewApiModal from './AddNewApiModal'
-import { useQuery } from 'react-query';
+// Note: we are not using react-query here to keep explicit loader control
 
 
 const styles = {
@@ -141,6 +141,7 @@ const Dashboard = () => {
     const [showLoader, setShowLoader] = useState(false);
 
 
+    // Data loading effect with explicit loader so Loader can be shown
     useEffect(() => {
         if (userId) {
             setShowLoader(true);
@@ -159,28 +160,13 @@ const Dashboard = () => {
     }, [reload, userId])
 
 
-    const getAllApiChecks = () => {
-        if (!userId) return;
-        getAllChecks(userId).then(response => {
-            if (response?.[0]) {
-                setAllApiChecks(response?.[0]);
-                updateFilteredDataOnStatus(selectedGroup, selectedStatus, response?.[0]);
-                generateGroupOptions(response);
-            } else {
-                setAllApiChecks([]);
-                setFilteredApiChecks([]);
-            }
-        });
-    }
-
-    const { data, isLoading, isError, refetch } = useQuery(
-        ['apiCheckData', userId],
-        getAllApiChecks,
-        {
-            enabled: !!userId,
-            refetchInterval: addNewApiModalVisualize ? false : 1000 * 60, // Refetch every 60 seconds if addNewApiModalVisualize is false
-        }
-    );
+    // Optional: polling refresh every 60s unless the Add modal is open
+    // We keep it simple and controlled; feel free to enable if desired.
+    // useEffect(() => {
+    //     if (!userId || addNewApiModalVisualize) return;
+    //     const t = setInterval(() => setReload(r => !r), 60000);
+    //     return () => clearInterval(t);
+    // }, [userId, addNewApiModalVisualize]);
 
 
     const generateGroupOptions = (response) => {
@@ -463,15 +449,31 @@ const Dashboard = () => {
                                     </div>
 
                                     <div className='apiCheckContent'>
-                                        <div style={{ width: '100px' }}>
-                                            <div style={styles.smallText}>Method</div>
-                                            <div>{apiCheckDetails?.method}</div>
-                                        </div>
+                                        {(apiCheckDetails?.protocol === 'http' || apiCheckDetails?.protocol === 'https') && (
+                                            <>
+                                                <div style={{ width: '100px' }}>
+                                                    <div style={styles.smallText}>Method</div>
+                                                    <div>{apiCheckDetails?.method}</div>
+                                                </div>
 
-                                        <div style={{ width: '100px' }}>
-                                            <div style={styles.smallText}>Success Codes</div>
-                                            <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
-                                        </div>
+                                                <div style={{ width: '120px' }}>
+                                                    <div style={styles.smallText}>Success Codes</div>
+                                                    <div>{apiCheckDetails?.successCodes?.join(', ')}</div>
+                                                </div>
+                                            </>
+                                        )}
+                                        {apiCheckDetails?.protocol === 'tcp' && (
+                                            <div style={{ width: '100px' }}>
+                                                <div style={styles.smallText}>TCP Port</div>
+                                                <div>{apiCheckDetails?.port || '—'}</div>
+                                            </div>
+                                        )}
+                                        {apiCheckDetails?.protocol === 'dns' && (
+                                            <div style={{ width: '120px' }}>
+                                                <div style={styles.smallText}>DNS Type</div>
+                                                <div>{apiCheckDetails?.dnsRecordType || '—'}</div>
+                                            </div>
+                                        )}
 
                                         <div style={{ width: '160px' }}>
                                             <div style={styles.smallText}>Action</div>

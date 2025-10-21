@@ -78,7 +78,10 @@ const styles = {
 
 const protocolOptions = [
     { label: 'http', value: 'http' },
-    { label: 'https', value: 'https' }
+    { label: 'https', value: 'https' },
+    { label: 'tcp', value: 'tcp' },
+    { label: 'icmp (ping)', value: 'icmp' },
+    { label: 'dns', value: 'dns' }
 ]
 
 const methodOptions = [
@@ -153,6 +156,9 @@ const checkSampleData = {
     url: '',
     method: '',
     successCodes: [],
+    port: undefined,
+    dnsRecordType: '',
+    expectedDnsValue: '',
     timeoutSeconds: 1,
     isActive: true,
     serviceName: ''
@@ -172,11 +178,30 @@ const AddNewApiModal = React.memo((props) => {
             checks: Yup.array().of(
                 Yup.object().shape({
                     group: Yup.string().required('Group Name is required'),
-                    protocol: Yup.string().required('Protocol is required'),
-                    url: Yup.string().required('URL is required'),
-                    method: Yup.string().required('Method is required'),
+                    protocol: Yup.string().oneOf(['http', 'https', 'tcp', 'icmp', 'dns']).required('Protocol is required'),
+                    url: Yup.string().required('Host/URL is required'),
+                    method: Yup.string().when('protocol', {
+                        is: (p) => p === 'http' || p === 'https',
+                        then: (schema) => schema.required('Method is required'),
+                        otherwise: (schema) => schema.notRequired()
+                    }),
                     serviceName: Yup.string().required('Service Name is required'),
-                    successCodes: Yup.array().of(Yup.string().required('Success code is required')).min(1, 'At least one success code is required'),
+                    successCodes: Yup.array().when('protocol', {
+                        is: (p) => p === 'http' || p === 'https',
+                        then: (schema) => schema.of(Yup.string().required('Success code is required')).min(1, 'At least one success code is required'),
+                        otherwise: (schema) => schema.notRequired()
+                    }),
+                    port: Yup.number().when('protocol', {
+                        is: (p) => p === 'tcp',
+                        then: (schema) => schema.typeError('Port must be a number').required('Port is required for TCP').min(1).max(65535),
+                        otherwise: (schema) => schema.notRequired()
+                    }),
+                    dnsRecordType: Yup.string().when('protocol', {
+                        is: (p) => p === 'dns',
+                        then: (schema) => schema.oneOf(['A', 'AAAA', 'CNAME', 'MX', 'TXT']).required('Record type is required for DNS'),
+                        otherwise: (schema) => schema.notRequired()
+                    }),
+                    expectedDnsValue: Yup.string().notRequired(),
                     timeoutSeconds: Yup.number().required('Timeout seconds is required').min(1, 'Timeout seconds must be greater than 0').max(10, 'Timeout seconds must be less than or equal to 10'),
                     isActive: Yup.boolean()
                 })
@@ -256,7 +281,7 @@ const AddNewApiModal = React.memo((props) => {
 
         checkData[index] = {
             ...checkData?.[index],
-            [fieldName]: fieldName === 'timeoutSeconds' ? Number(value) : value
+            [fieldName]: fieldName === 'timeoutSeconds' || fieldName === 'port' ? Number(value) : value
         }
 
         setValues({
@@ -302,7 +327,7 @@ const AddNewApiModal = React.memo((props) => {
                 >
                     {purpose === 'ADD' ? 'Add New API Checks' : 'Edit API Check'}
                 </CustomModalHeader>
-                <CustomModalBody style={{ padding: '15px 5%', height: '82vh', overflowY: 'auto' }}>
+                <CustomModalBody style={{ padding: '15px 5%', maxHeight: '82vh', overflowY: 'auto' }}>
 
                     {/* Group */}
                     <div style={{ marginBottom: '15px' }}>
@@ -349,10 +374,10 @@ const AddNewApiModal = React.memo((props) => {
                                 }
 
                                 <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText} className="required">URL Path</div>
+                                    <div style={styles.smallText} className="required">{checkData?.protocol && (checkData.protocol === 'tcp' || checkData.protocol === 'icmp' || checkData.protocol === 'dns') ? 'Hostname' : 'URL Path'}</div>
                                     <div>
                                         <input
-                                            placeholder='Type URL'
+                                            placeholder={checkData?.protocol && (checkData.protocol === 'tcp' || checkData.protocol === 'icmp' || checkData.protocol === 'dns') ? 'Type Hostname (e.g., example.com)' : 'Type URL'}
                                             type="text"
                                             style={styles.inputFieldStyle}
                                             value={checkData?.url}
@@ -398,45 +423,96 @@ const AddNewApiModal = React.memo((props) => {
                                     </div>
                                 </div>
 
-
-                                <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText} className="required">Method</div>
-                                    <div>
-                                        <Select
-                                            value={methodOptions?.filter(methodOption => methodOption?.value === checkData?.method)?.[0]}
-                                            onChange={(e) => handleCheckInput('method', e.value, index)}
-                                            options={methodOptions}
-                                            menuPortalTarget={document.body}
-                                            menuPlacement="auto"
-                                            placeholder={'Select Method'}
-                                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                                        />
-                                        {touched?.checks?.[index].method && errors?.checks?.[index].method && (
-                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].method} origin={`method`} /></span>
-                                        )}
+                                {(checkData?.protocol === 'http' || checkData?.protocol === 'https') && (
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <div style={styles.smallText} className="required">Method</div>
+                                        <div>
+                                            <Select
+                                                value={methodOptions?.filter(methodOption => methodOption?.value === checkData?.method)?.[0]}
+                                                onChange={(e) => handleCheckInput('method', e.value, index)}
+                                                options={methodOptions}
+                                                menuPortalTarget={document.body}
+                                                menuPlacement="auto"
+                                                placeholder={'Select Method'}
+                                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                            />
+                                            {touched?.checks?.[index].method && errors?.checks?.[index].method && (
+                                                <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].method} origin={`method`} /></span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
-                                <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText} className="required">Success Codes</div>
-                                    <div>
-                                        <Select
-                                            value={statusCodeOptions?.filter(statusCodeOption => checkData?.successCodes?.includes(statusCodeOption?.value))}
-                                            onChange={(e) => handleSuccessCodeMultiSelect(e, index)}
-                                            options={statusCodeOptions}
-                                            isMulti
-                                            className="basic-multi-select"
-                                            classNamePrefix="select"
-                                            menuPortalTarget={document.body}
-                                            menuPlacement="auto"
-                                            placeholder={'Select Protocol'}
-                                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                                        />
-                                        {touched?.checks?.[index].successCodes && errors?.checks?.[index].successCodes && (
-                                            <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].successCodes} origin={`successCodes`} /></span>
-                                        )}
+                                {(checkData?.protocol === 'http' || checkData?.protocol === 'https') && (
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <div style={styles.smallText} className="required">Success Codes</div>
+                                        <div>
+                                            <Select
+                                                value={statusCodeOptions?.filter(statusCodeOption => checkData?.successCodes?.includes(statusCodeOption?.value))}
+                                                onChange={(e) => handleSuccessCodeMultiSelect(e, index)}
+                                                options={statusCodeOptions}
+                                                isMulti
+                                                className="basic-multi-select"
+                                                classNamePrefix="select"
+                                                menuPortalTarget={document.body}
+                                                menuPlacement="auto"
+                                                placeholder={'Select Success Codes'}
+                                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                            />
+                                            {touched?.checks?.[index].successCodes && errors?.checks?.[index].successCodes && (
+                                                <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].successCodes} origin={`successCodes`} /></span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+
+                                {checkData?.protocol === 'tcp' && (
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <div style={styles.smallText} className="required">TCP Port</div>
+                                        <div>
+                                            <input
+                                                placeholder='Enter port (1-65535)'
+                                                type="number"
+                                                style={styles.inputFieldStyle}
+                                                value={checkData?.port || ''}
+                                                onChange={(e) => handleCheckInput('port', e.target.value, index)}
+                                            />
+                                            {touched?.checks?.[index].port && errors?.checks?.[index].port && (
+                                                <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].port} origin={`port`} /></span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {checkData?.protocol === 'dns' && (
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <div style={styles.smallText} className="required">DNS Record Type</div>
+                                        <div>
+                                            <Select
+                                                value={[{ label: 'A', value: 'A' }, { label: 'AAAA', value: 'AAAA' }, { label: 'CNAME', value: 'CNAME' }, { label: 'MX', value: 'MX' }, { label: 'TXT', value: 'TXT' }].filter(o => o.value === checkData?.dnsRecordType)?.[0]}
+                                                onChange={(e) => handleCheckInput('dnsRecordType', e.value, index)}
+                                                options={[{ label: 'A', value: 'A' }, { label: 'AAAA', value: 'AAAA' }, { label: 'CNAME', value: 'CNAME' }, { label: 'MX', value: 'MX' }, { label: 'TXT', value: 'TXT' }]}
+                                                menuPortalTarget={document.body}
+                                                menuPlacement="auto"
+                                                placeholder={'Select DNS Record Type'}
+                                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                            />
+                                            {touched?.checks?.[index].dnsRecordType && errors?.checks?.[index].dnsRecordType && (
+                                                <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].dnsRecordType} origin={`dnsRecordType`} /></span>
+                                            )}
+                                        </div>
+                                        <div style={{ marginTop: '15px' }}>
+                                            <div style={styles.smallText}>Expected Value (optional)</div>
+                                            <input
+                                                placeholder='e.g., 93.184.216.34 for A, or cname.example.com'
+                                                type="text"
+                                                style={styles.inputFieldStyle}
+                                                value={checkData?.expectedDnsValue || ''}
+                                                onChange={(e) => handleCheckInput('expectedDnsValue', e.target.value, index)}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div style={{ marginBottom: '15px' }}>
                                     <div style={styles.smallText} className="required">Timeout seconds (must be less than 10)</div>

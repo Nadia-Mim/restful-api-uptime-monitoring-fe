@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import getSettings from '../../api/settings/GET';
 import putSettings from '../../api/settings/PUT';
 import SuccessModal from '../common/modals/successModal/SuccessModal';
+import Loader from '../common/loader/Loader';
 
 const Settings = () => {
     const queryClient = useQueryClient();
@@ -14,7 +15,8 @@ const Settings = () => {
         }
     })();
 
-    const { data } = useQuery(['settings', userId], () => getSettings({ userId }), { enabled: !!userId });
+    // Load user settings; expose loader via isLoading
+    const { data, isLoading } = useQuery(['settings', userId], () => getSettings({ userId }), { enabled: !!userId });
     const [ttl, setTtl] = useState(24);
     const [successModalVisible, setSuccessModalVisible] = useState(false);
     const [message, setMessage] = useState('');
@@ -36,6 +38,8 @@ const Settings = () => {
 
     return (
         <div>
+            {/* Page-level loader */}
+            {isLoading && <Loader />}
             {successModalVisible && (
                 <SuccessModal
                     modalVisible={successModalVisible}

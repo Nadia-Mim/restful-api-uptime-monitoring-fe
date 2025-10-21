@@ -11,9 +11,6 @@ import LogoutIcon from '../../icons/Logout.svg';
 import LogoutRedIcon from '../../icons/LogoutRed.svg';
 import Systech from '../../images/Systech.png';
 import MenuBarsIcon from '../../icons/MenuBarsIcon.svg';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
-import getSettings from '../../api/settings/GET';
-import putSettings from '../../api/settings/PUT';
 
 const Navbar = () => {
 
@@ -49,6 +46,7 @@ const Navbar = () => {
 
     return (
         <div className='nav'>
+            {/* Top navigation bar */}
             <div className='top-nav'>
                 <div>
                     <img src={Systech} style={{ height: '80px', width: '80px', marginLeft: '-15px', cursor: 'pointer' }} onClick={() => routeToDashboard()} />
@@ -81,6 +79,7 @@ const Navbar = () => {
                 </div>
             </div>
 
+            {/* Mobile dropdown navigation */}
             {showMobileNav &&
                 <div style={{ position: 'absolute', padding: '20px', background: 'rgba(30, 31, 38, 0.9)', width: '100%', boxShadow: '0 4px 8px rgba(74, 75, 81, 0.5)' }}>
                     <div
@@ -130,6 +129,7 @@ const Navbar = () => {
                 </div>
             }
 
+            {/* Left sidebar navigation */}
             <div className='left-nav'>
                 <ul>
                     <li onClick={() => setCurrentNavigation('Dashboard')}>
