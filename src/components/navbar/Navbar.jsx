@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthContext from '../../contexts/AuthContext';
 import Gear from '../../icons/Gear.svg';
@@ -7,8 +7,10 @@ import DashboardIcon from '../../icons/Dashboard.svg';
 import DashboardBlueIcon from '../../icons/DashboardBlue.svg';
 import User from '../../icons/User.svg';
 import UserBlue from '../../icons/UserBlue.svg';
-import LogoutIcon from '../../icons/Logout.svg';
-import LogoutRedIcon from '../../icons/LogoutRed.svg';
+import ExitRounded from '../../icons/ExitRounded.svg';
+import ExitRoundedRed from '../../icons/ExitRoundedRed.svg';
+import DeploymentsWhite from '../../icons/DeploymentsWhite.svg';
+import DeploymentsBlue from '../../icons/DeploymentsBlue.svg';
 import Systech from '../../images/Systech.png';
 import MenuBarsIcon from '../../icons/MenuBarsIcon.svg';
 
@@ -24,7 +26,8 @@ const Navbar = () => {
     const pageTitle = (() => {
         const p = location.pathname.toLowerCase();
         if (p.startsWith('/dashboard')) return 'Dashboard';
-        if (p.startsWith('/settings')) return 'Settings';
+    if (p.startsWith('/settings')) return 'Settings';
+    if (p.startsWith('/deployments')) return 'Deployments';
         if (p.startsWith('/check/')) return 'API Details';
         if (p.startsWith('/user')) return 'Profile';
         return '';
@@ -44,6 +47,16 @@ const Navbar = () => {
         navigate('/user');
     }
 
+    // Active nav derived from current location for reliable icon state
+    const activeKey = useMemo(() => {
+        const p = location.pathname.toLowerCase();
+        if (p.startsWith('/dashboard')) return 'Dashboard';
+        if (p.startsWith('/settings')) return 'Settings';
+        if (p.startsWith('/deployments')) return 'Deployments';
+        if (p.startsWith('/user')) return 'User';
+        return '';
+    }, [location.pathname]);
+
     return (
         <div className='nav'>
             {/* Top navigation bar */}
@@ -57,23 +70,23 @@ const Navbar = () => {
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                     {/* User icon button */}
                     <img
-                        src={currentNavigation === 'User' ? UserBlue : User}
+                        src={activeKey === 'User' ? UserBlue : User}
                         className='topbar-icon'
                         style={{ height: '24px', width: '24px' }}
                         alt='User'
                         onClick={routeToUserProfile}
                         onMouseEnter={(e) => { e.currentTarget.src = UserBlue; }}
-                        onMouseLeave={(e) => { e.currentTarget.src = (currentNavigation === 'User' ? UserBlue : User); }}
+                        onMouseLeave={(e) => { e.currentTarget.src = (activeKey === 'User' ? UserBlue : User); }}
                     />
-                    {/* Logout icon button */}
+                    {/* Exit icon button (rounded; hover turns red) */}
                     <img
-                        src={LogoutIcon}
+                        src={ExitRounded}
                         className='topbar-icon'
                         alt='Log out'
                         title='Log out'
                         onClick={handleLogout}
-                        onMouseEnter={(e) => { e.currentTarget.src = LogoutRedIcon; }}
-                        onMouseLeave={(e) => { e.currentTarget.src = LogoutIcon; }}
+                        onMouseEnter={(e) => { e.currentTarget.src = ExitRoundedRed; }}
+                        onMouseLeave={(e) => { e.currentTarget.src = ExitRounded; }}
                     />
                     <img src={MenuBarsIcon} className='mobile-nav' onClick={() => setShowMobileNav(!showMobileNav)} />
                 </div>
@@ -90,8 +103,19 @@ const Navbar = () => {
                         }}
                         style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
                     >
-                        <span className='icon'><img src={currentNavigation === 'Dashboard' ? DashboardBlueIcon : DashboardIcon} style={{ height: '28px', width: '28px' }} /></span>
+                        <span className='icon'><img src={activeKey === 'Dashboard' ? DashboardBlueIcon : DashboardIcon} style={{ height: '28px', width: '28px' }} /></span>
                         API Check
+                    </div>
+                    <div
+                        onClick={() => {
+                            setCurrentNavigation('Deployments');
+                            navigate('/deployments');
+                            setShowMobileNav(false);
+                        }}
+                        style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
+                    >
+                        <span className='icon'><img src={activeKey === 'Deployments' ? DeploymentsBlue : DeploymentsWhite} style={{ height: '28px', width: '28px' }} /></span>
+                        Deployments
                     </div>
                     <div
                         onClick={() => {
@@ -101,7 +125,7 @@ const Navbar = () => {
                         }}
                         style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
                     >
-                        <span className='icon'><img src={currentNavigation === 'Settings' ? GearBlue : Gear} style={{ height: '28px', width: '28px' }} /></span>
+                        <span className='icon'><img src={activeKey === 'Settings' ? GearBlue : Gear} style={{ height: '28px', width: '28px' }} /></span>
                         Settings
                     </div>
                     <div
@@ -112,7 +136,7 @@ const Navbar = () => {
                         }}
                         style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
                     >
-                        <span className='icon'><img src={currentNavigation === 'User' ? UserBlue : User} style={{ height: '25px', width: '25px' }} /></span>
+                        <span className='icon'><img src={activeKey === 'User' ? UserBlue : User} style={{ height: '25px', width: '25px' }} /></span>
                         Profile
                     </div>
                     <div
@@ -123,7 +147,7 @@ const Navbar = () => {
                         }}
                         style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
                     >
-                        <span className='icon'><img src={currentNavigation === 'Logout' ? LogoutRedIcon : LogoutIcon} style={{ height: '25px', width: '25px' }} /></span>
+                        <span className='icon'><img src={ExitRounded} style={{ height: '25px', width: '25px' }} onMouseEnter={(e) => { e.currentTarget.src = ExitRoundedRed; }} onMouseLeave={(e) => { e.currentTarget.src = ExitRounded; }} /></span>
                         Log Out
                     </div>
                 </div>
@@ -132,15 +156,21 @@ const Navbar = () => {
             {/* Left sidebar navigation */}
             <div className='left-nav'>
                 <ul>
-                    <li onClick={() => setCurrentNavigation('Dashboard')}>
+                    <li>
                         <Link to="/dashboard">
-                            <span className='icon'><img src={currentNavigation === 'Dashboard' ? DashboardBlueIcon : DashboardIcon} style={{ height: '28px', width: '28px' }} /></span>
+                            <span className='icon'><img src={activeKey === 'Dashboard' ? DashboardBlueIcon : DashboardIcon} style={{ height: '28px', width: '28px' }} /></span>
                             <span className='circle'></span>
                         </Link>
                     </li>
-                    <li onClick={() => setCurrentNavigation('Settings')}>
+                    <li>
+                        <Link to="/deployments">
+                            <span className='icon'><img src={activeKey === 'Deployments' ? DeploymentsBlue : DeploymentsWhite} style={{ height: '28px', width: '28px' }} /></span>
+                            <span className='circle'></span>
+                        </Link>
+                    </li>
+                    <li>
                         <Link to="/settings">
-                            <span className='icon'><img src={currentNavigation === 'Settings' ? GearBlue : Gear} style={{ height: '28px', width: '28px' }} /></span>
+                            <span className='icon'><img src={activeKey === 'Settings' ? GearBlue : Gear} style={{ height: '28px', width: '28px' }} /></span>
                             <span className='circle'></span>
                         </Link>
                     </li>
