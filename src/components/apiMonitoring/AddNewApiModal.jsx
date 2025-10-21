@@ -159,6 +159,7 @@ const checkSampleData = {
     port: undefined,
     dnsRecordType: '',
     expectedDnsValue: '',
+    tags: [],
     timeoutSeconds: 1,
     isActive: true,
     serviceName: ''
@@ -202,6 +203,7 @@ const AddNewApiModal = React.memo((props) => {
                         otherwise: (schema) => schema.notRequired()
                     }),
                     expectedDnsValue: Yup.string().notRequired(),
+                    tags: Yup.array().of(Yup.string()).notRequired(),
                     timeoutSeconds: Yup.number().required('Timeout seconds is required').min(1, 'Timeout seconds must be greater than 0').max(10, 'Timeout seconds must be less than or equal to 10'),
                     isActive: Yup.boolean()
                 })
@@ -402,6 +404,19 @@ const AddNewApiModal = React.memo((props) => {
                                         {touched?.checks?.[index].serviceName && errors?.checks?.[index].serviceName && (
                                             <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].serviceName} origin={`serviceName`} /></span>
                                         )}
+                                    </div>
+                                </div>
+
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={styles.smallText}>Tags (comma-separated)</div>
+                                    <div>
+                                        <input
+                                            placeholder='e.g., prod, payments, team-x'
+                                            type="text"
+                                            style={styles.inputFieldStyle}
+                                            value={(checkData?.tags || []).join(', ')}
+                                            onChange={(e) => handleCheckInput('tags', e.target.value.split(',').map(t => t.trim()).filter(Boolean), index)}
+                                        />
                                     </div>
                                 </div>
 

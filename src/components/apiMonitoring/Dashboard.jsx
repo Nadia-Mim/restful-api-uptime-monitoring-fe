@@ -363,6 +363,22 @@ const Dashboard = () => {
                     <div className='small-screen-full-width'>
                         <Select
                             onChange={(e) => {
+                                setSelectedGroup(e?.value);
+                                updateFilteredDataOnStatus(e?.value, selectedStatus);
+                            }}
+                            value={groupOptions?.filter(group => group?.value === selectedGroup)?.[0]}
+                            options={groupOptions?.filter(group => group?.value !== 'Other')}
+                            menuPortalTarget={document.body}
+                            menuPlacement="auto"
+                            placeholder={'Select Group'}
+                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                        />
+                        <div style={styles.smallText}>Select Group</div>
+                    </div>
+
+                    <div className='small-screen-full-width'>
+                        <Select
+                            onChange={(e) => {
                                 setSelectedStatus(e.value);
                                 updateFilteredDataOnStatus(selectedGroup, e.value);
                             }}
