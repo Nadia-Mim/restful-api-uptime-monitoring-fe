@@ -94,14 +94,15 @@ const ApiDetails = () => {
     const { data: checksResponse, isLoading: isLoadingChecks } = useQuery(
         ['checks', userId],
         () => getAllChecks(userId),
-        { enabled: !stateCheck && !!userId }
+        { enabled: !!userId }
     );
 
     // Derive target check: prefer router state, otherwise locate by id from fetched list
     const check = useMemo(() => {
-        if (stateCheck) return stateCheck;
         const checks = checksResponse?.[0] || [];
-        return checks.find((chk) => chk?._id === id);
+        const fetched = checks.find((chk) => chk?._id === id);
+        if (fetched && stateCheck) return { ...stateCheck, ...fetched };
+        return fetched || stateCheck;
     }, [stateCheck, checksResponse, id]);
 
     // Query: fetch health logs for this check id
@@ -140,6 +141,17 @@ const ApiDetails = () => {
 
     const upCount = filteredLogs.filter((log) => log.state === 'UP').length;
     const downCount = filteredLogs.length - upCount;
+
+    // SSL helpers
+    const sslEnabled = !!check?.sslExpiryAlerts;
+    const sslExpiryAtMs = Number(check?.sslLastCertExpiryAt) || 0;
+    const sslLastCheckedAtMs = Number(check?.sslLastCheckedAt) || 0;
+    const daysLeft = useMemo(() => {
+        if (!sslExpiryAtMs) return null;
+        const ms = sslExpiryAtMs - Date.now();
+        return Math.floor(ms / (1000 * 60 * 60 * 24));
+    }, [sslExpiryAtMs]);
+    const sslThresholds = Array.isArray(check?.sslAlertThresholdsSent) ? [...check.sslAlertThresholdsSent].sort((a, b) => a - b) : [];
 
     // Render
     return (
@@ -242,6 +254,41 @@ const ApiDetails = () => {
                 </div>
                 <AreaChart data={points} />
             </div>
+
+            {/* SSL/TLS Certificate (HTTPS only) */}
+            {check?.protocol === 'https' && (
+                <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px', display: 'grid', gridTemplateColumns: '220px 1fr', gap: 12 }}>
+                    <div style={{ fontWeight: 600, gridColumn: '1 / span 2', marginBottom: 6 }}>SSL/TLS Certificate</div>
+
+                    <div style={{ opacity: 0.8 }}>Expiry alerts</div>
+                    <div>{sslEnabled ? 'Enabled (per Settings)' : 'Disabled'}</div>
+
+                    <div style={{ opacity: 0.8 }}>Cert expiry</div>
+                    <div>
+                        {sslExpiryAtMs ? new Date(sslExpiryAtMs).toLocaleString() : '—'}
+                        {typeof daysLeft === 'number' && (
+                            <span className="stat-chip" style={{ marginLeft: 8 }}>
+                                <span className={`dot ${daysLeft <= 7 ? 'bad' : daysLeft <= 30 ? 'warn' : 'good'}`}></span>
+                                {daysLeft} day{Math.abs(daysLeft) === 1 ? '' : 's'} left
+                            </span>
+                        )}
+                    </div>
+
+                    <div style={{ opacity: 0.8 }}>Last SSL check</div>
+                    <div>{sslLastCheckedAtMs ? new Date(sslLastCheckedAtMs).toLocaleString() : '—'}</div>
+
+                    <div style={{ opacity: 0.8 }}>Alerts sent for thresholds</div>
+                    <div>
+                        {sslThresholds.length ? (
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                {sslThresholds.map((d) => (
+                                    <span key={d} className="glass-badge" style={{ padding: '3px 8px', borderRadius: 8 }}>{d}d</span>
+                                ))}
+                            </div>
+                        ) : '—'}
+                    </div>
+                </div>
+            )}
 
             {/* Latest response summary (statusCode, responseTime, alert, error) */}
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px' }}>

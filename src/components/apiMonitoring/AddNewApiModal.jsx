@@ -210,7 +210,7 @@ const AddNewApiModal = React.memo((props) => {
                     }),
                     expectedDnsValue: Yup.string().notRequired(),
                     tags: Yup.array().of(Yup.string()).notRequired(),
-                    authType: Yup.string().oneOf(['none','bearer','apiKey']).notRequired(),
+                    authType: Yup.string().oneOf(['none', 'bearer', 'apiKey']).notRequired(),
                     bearerToken: Yup.string().notRequired(),
                     apiKeyHeaderName: Yup.string().notRequired(),
                     apiKeyValue: Yup.string().notRequired(),
@@ -475,9 +475,9 @@ const AddNewApiModal = React.memo((props) => {
                                         <div style={styles.smallText}>Authentication</div>
                                         <div>
                                             <Select
-                                                value={[{label:'None',value:'none'},{label:'Bearer token',value:'bearer'},{label:'API key (header)',value:'apiKey'}].filter(o=>o.value===checkData?.authType)?.[0]}
+                                                value={[{ label: 'None', value: 'none' }, { label: 'Bearer token', value: 'bearer' }, { label: 'API key (header)', value: 'apiKey' }].filter(o => o.value === checkData?.authType)?.[0]}
                                                 onChange={(e) => handleCheckInput('authType', e.value, index)}
-                                                options={[{label:'None',value:'none'},{label:'Bearer token',value:'bearer'},{label:'API key (header)',value:'apiKey'}]}
+                                                options={[{ label: 'None', value: 'none' }, { label: 'Bearer token', value: 'bearer' }, { label: 'API key (header)', value: 'apiKey' }]}
                                                 menuPortalTarget={document.body}
                                                 menuPlacement="auto"
                                                 placeholder={'Select Auth Type'}
@@ -535,7 +535,7 @@ const AddNewApiModal = React.memo((props) => {
                                                     checked={!!checkData?.sslExpiryAlerts}
                                                     onChange={(e) => handleCheckInput('sslExpiryAlerts', e.target.checked, index)}
                                                 />
-                                                <span>Notify at 30/14/7/3/1 days</span>
+                                                <span>Notify for SSL Expiry</span>
                                             </label>
                                         </div>
                                     </div>
