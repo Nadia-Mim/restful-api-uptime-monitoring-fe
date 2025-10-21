@@ -112,10 +112,16 @@ const dummyGroups = [
 
 let arr = [1, 2, 3, 4, 5, 6]
 
-const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
-
 const Dashboard = () => {
     const navigate = useNavigate();
+    // derive userId fresh each render to avoid stale data across logins
+    const userId = (() => {
+        try {
+            return JSON.parse(localStorage.getItem('authData') || '{}')?.userId;
+        } catch (e) {
+            return undefined;
+        }
+    })();
 
     const [groupOptions, setGroupOptions] = useState(dummyGroups);
     const [selectedGroup, setSelectedGroup] = useState('All');
@@ -136,9 +142,9 @@ const Dashboard = () => {
 
 
     useEffect(() => {
-        if (authData?.userId) {
+        if (userId) {
             setShowLoader(true);
-            getAllChecks(authData?.userId).then(response => {
+            getAllChecks(userId).then(response => {
                 setShowLoader(false);
                 if (response?.[0]) {
                     setAllApiChecks(response?.[0]);
@@ -150,11 +156,12 @@ const Dashboard = () => {
                 }
             });
         }
-    }, [reload])
+    }, [reload, userId])
 
 
     const getAllApiChecks = () => {
-        getAllChecks(authData?.userId).then(response => {
+        if (!userId) return;
+        getAllChecks(userId).then(response => {
             if (response?.[0]) {
                 setAllApiChecks(response?.[0]);
                 updateFilteredDataOnStatus(selectedGroup, selectedStatus, response?.[0]);
@@ -167,10 +174,11 @@ const Dashboard = () => {
     }
 
     const { data, isLoading, isError, refetch } = useQuery(
-        'apiCheckData',
+        ['apiCheckData', userId],
         getAllApiChecks,
         {
-            refetchInterval: addNewApiModalVisualize ? false : 1000 * 60, // Refetch every 10 seconds if addNewApiModalVisualize is false
+            enabled: !!userId,
+            refetchInterval: addNewApiModalVisualize ? false : 1000 * 60, // Refetch every 60 seconds if addNewApiModalVisualize is false
         }
     );
 

@@ -6,8 +6,13 @@ import SuccessModal from '../common/modals/successModal/SuccessModal';
 
 const Settings = () => {
     const queryClient = useQueryClient();
-    const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
-    const userId = authData?.userId;
+    const userId = (() => {
+        try {
+            return JSON.parse(localStorage.getItem('authData') || '{}')?.userId;
+        } catch (e) {
+            return undefined;
+        }
+    })();
 
     const { data } = useQuery(['settings', userId], () => getSettings({ userId }), { enabled: !!userId });
     const [ttl, setTtl] = useState(24);
