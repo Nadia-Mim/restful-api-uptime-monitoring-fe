@@ -19,10 +19,12 @@ const Settings = () => {
     const { data, isLoading } = useQuery(['settings', userId], () => getSettings({ userId }), { enabled: !!userId });
     const [ttl, setTtl] = useState(24);
     const [sslThresholdDays, setSslThresholdDays] = useState([30, 14, 7, 3, 1]);
+    const [globalIntervalMinutes, setGlobalIntervalMinutes] = useState(1);
     const [successModalVisible, setSuccessModalVisible] = useState(false);
     const [message, setMessage] = useState('');
     useEffect(() => {
         if (data?.ttlHours) setTtl(Number(data.ttlHours));
+        if (data?.globalIntervalMinutes) setGlobalIntervalMinutes(Number(data.globalIntervalMinutes));
         if (Array.isArray(data?.sslThresholdDays)) setSslThresholdDays(data.sslThresholdDays);
     }, [data]);
 
@@ -51,6 +53,21 @@ const Settings = () => {
             )}
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                    <div style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Global Interval (Minutes):</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}>
+                        {[{ label: '1m', val: 1 }, { label: '5m', val: 5 }, { label: '15m', val: 15 }].map(opt => (
+                            <div key={opt.val} className={`pill ${globalIntervalMinutes === opt.val ? 'active' : ''}`} onClick={() => setGlobalIntervalMinutes(opt.val)}>
+                                {opt.label}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12, color: '#AEB5BD' }}>
+                    How often to run checks. Higher values reduce system load; all checks share this schedule.
+                </div>
+            </div>
+            <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                     <div style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Health Log Retention (TTL):</div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'nowrap' }}>
                         {[{ label: '24H', val: 24 }, { label: '7D', val: 24 * 7 }, { label: '1M', val: 24 * 30 }].map(opt => (
@@ -59,6 +76,9 @@ const Settings = () => {
                             </div>
                         ))}
                     </div>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 12, color: '#AEB5BD' }}>
+                    How long to keep health logs before they are automatically deleted.
                 </div>
             </div>
             <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '12px' }}>
@@ -80,9 +100,12 @@ const Settings = () => {
                         })}
                     </div>
                 </div>
+                <div style={{ marginTop: 8, fontSize: 12, color: '#AEB5BD' }}>
+                    When to notify before a certificate expires. Each selected threshold alerts once.
+                </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                <div className="glass-button-primary" style={{ padding: '8px 40px', borderRadius: 10, cursor: 'pointer' }} onClick={() => userId && mutation.mutate({ userId, ttlHours: ttl, sslThresholdDays })}>Save</div>
+                <div className="glass-button-primary" style={{ padding: '8px 40px', borderRadius: 10, cursor: 'pointer' }} onClick={() => userId && mutation.mutate({ userId, ttlHours: ttl, globalIntervalMinutes, sslThresholdDays })}>Save</div>
             </div>
         </div>
     );
