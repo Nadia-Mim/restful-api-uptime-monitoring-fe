@@ -160,6 +160,12 @@ const checkSampleData = {
     dnsRecordType: '',
     expectedDnsValue: '',
     tags: [],
+    authType: 'none',
+    bearerToken: '',
+    apiKeyHeaderName: '',
+    apiKeyValue: '',
+    headers: {},
+    sslExpiryAlerts: false,
     timeoutSeconds: 1,
     isActive: true,
     serviceName: ''
@@ -204,6 +210,12 @@ const AddNewApiModal = React.memo((props) => {
                     }),
                     expectedDnsValue: Yup.string().notRequired(),
                     tags: Yup.array().of(Yup.string()).notRequired(),
+                    authType: Yup.string().oneOf(['none','bearer','apiKey']).notRequired(),
+                    bearerToken: Yup.string().notRequired(),
+                    apiKeyHeaderName: Yup.string().notRequired(),
+                    apiKeyValue: Yup.string().notRequired(),
+                    headers: Yup.object().notRequired(),
+                    sslExpiryAlerts: Yup.boolean().notRequired(),
                     timeoutSeconds: Yup.number().required('Timeout seconds is required').min(1, 'Timeout seconds must be greater than 0').max(10, 'Timeout seconds must be less than or equal to 10'),
                     isActive: Yup.boolean()
                 })
@@ -454,6 +466,77 @@ const AddNewApiModal = React.memo((props) => {
                                             {touched?.checks?.[index].method && errors?.checks?.[index].method && (
                                                 <span style={styles.customError}><ErrorTooltip content={errors?.checks?.[index].method} origin={`method`} /></span>
                                             )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(checkData?.protocol === 'http' || checkData?.protocol === 'https') && (
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <div style={styles.smallText}>Authentication</div>
+                                        <div>
+                                            <Select
+                                                value={[{label:'None',value:'none'},{label:'Bearer token',value:'bearer'},{label:'API key (header)',value:'apiKey'}].filter(o=>o.value===checkData?.authType)?.[0]}
+                                                onChange={(e) => handleCheckInput('authType', e.value, index)}
+                                                options={[{label:'None',value:'none'},{label:'Bearer token',value:'bearer'},{label:'API key (header)',value:'apiKey'}]}
+                                                menuPortalTarget={document.body}
+                                                menuPlacement="auto"
+                                                placeholder={'Select Auth Type'}
+                                                styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                            />
+                                        </div>
+                                        {checkData?.authType === 'bearer' && (
+                                            <div style={{ marginTop: '10px' }}>
+                                                <div style={styles.smallText}>Bearer token</div>
+                                                <input
+                                                    placeholder='Paste token'
+                                                    type="text"
+                                                    style={styles.inputFieldStyle}
+                                                    value={checkData?.bearerToken || ''}
+                                                    onChange={(e) => handleCheckInput('bearerToken', e.target.value, index)}
+                                                />
+                                            </div>
+                                        )}
+                                        {checkData?.authType === 'apiKey' && (
+                                            <div style={{ marginTop: '10px' }}>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <div style={{ width: '50%' }}>
+                                                        <div style={styles.smallText}>Header name</div>
+                                                        <input
+                                                            placeholder='e.g., x-api-key'
+                                                            type="text"
+                                                            style={styles.inputFieldStyle}
+                                                            value={checkData?.apiKeyHeaderName || ''}
+                                                            onChange={(e) => handleCheckInput('apiKeyHeaderName', e.target.value, index)}
+                                                        />
+                                                    </div>
+                                                    <div style={{ width: '50%' }}>
+                                                        <div style={styles.smallText}>Header value</div>
+                                                        <input
+                                                            placeholder='API key value'
+                                                            type="text"
+                                                            style={styles.inputFieldStyle}
+                                                            value={checkData?.apiKeyValue || ''}
+                                                            onChange={(e) => handleCheckInput('apiKeyValue', e.target.value, index)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {checkData?.protocol === 'https' && (
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <div style={styles.smallText}>SSL certificate expiry alerts</div>
+                                        <div>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!checkData?.sslExpiryAlerts}
+                                                    onChange={(e) => handleCheckInput('sslExpiryAlerts', e.target.checked, index)}
+                                                />
+                                                <span>Notify at 30/14/7/3/1 days</span>
+                                            </label>
                                         </div>
                                     </div>
                                 )}
