@@ -363,22 +363,6 @@ const Dashboard = () => {
                     <div className='small-screen-full-width'>
                         <Select
                             onChange={(e) => {
-                                setSelectedGroup(e?.value);
-                                updateFilteredDataOnStatus(e.value, selectedStatus);
-                            }}
-                            value={groupOptions?.filter(group => group?.value === selectedGroup)?.[0]}
-                            options={groupOptions?.filter(group => group?.value !== 'Other')}
-                            menuPortalTarget={document.body}
-                            menuPlacement="auto"
-                            placeholder={'Select State'}
-                            styles={{ ...styles.selectStyle, menuPortal: base => ({ ...base, zIndex: 9999 }) }}
-                        />
-                        <div style={styles.smallText}>Select Group</div>
-                    </div>
-
-                    <div className='small-screen-full-width'>
-                        <Select
-                            onChange={(e) => {
                                 setSelectedStatus(e.value);
                                 updateFilteredDataOnStatus(selectedGroup, e.value);
                             }}
@@ -475,7 +459,7 @@ const Dashboard = () => {
                                             </div>
                                         )}
 
-                                        <div style={{ width: '160px' }}>
+                                        <div style={{ width: '160px', marginLeft: 'auto' }}>
                                             <div style={styles.smallText}>Action</div>
                                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                                 <CustomToggleSwitch
