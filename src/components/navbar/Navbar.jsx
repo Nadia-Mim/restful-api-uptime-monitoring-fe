@@ -7,8 +7,8 @@ import DashboardIcon from '../../icons/Dashboard.svg';
 import DashboardBlueIcon from '../../icons/DashboardBlue.svg';
 import User from '../../icons/User.svg';
 import UserBlue from '../../icons/UserBlue.svg';
-import ExitRounded from '../../icons/ExitRounded.svg';
-import ExitRoundedRed from '../../icons/ExitRoundedRed.svg';
+import Logout from '../../icons/Logout.svg';
+import LogoutRed from '../../icons/LogoutRed.svg';
 import DeploymentsWhite from '../../icons/DeploymentsWhite.svg';
 import DeploymentsBlue from '../../icons/DeploymentsBlue.svg';
 import Systech from '../../images/Systech.png';
@@ -80,13 +80,13 @@ const Navbar = () => {
                     />
                     {/* Exit icon button (rounded; hover turns red) */}
                     <img
-                        src={ExitRounded}
+                        src={Logout}
                         className='topbar-icon'
                         alt='Log out'
                         title='Log out'
                         onClick={handleLogout}
-                        onMouseEnter={(e) => { e.currentTarget.src = ExitRoundedRed; }}
-                        onMouseLeave={(e) => { e.currentTarget.src = ExitRounded; }}
+                        onMouseEnter={(e) => { e.currentTarget.src = LogoutRed; }}
+                        onMouseLeave={(e) => { e.currentTarget.src = Logout; }}
                     />
                     <img src={MenuBarsIcon} className='mobile-nav' onClick={() => setShowMobileNav(!showMobileNav)} />
                 </div>
@@ -147,7 +147,7 @@ const Navbar = () => {
                         }}
                         style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
                     >
-                        <span className='icon'><img src={ExitRounded} style={{ height: '25px', width: '25px' }} onMouseEnter={(e) => { e.currentTarget.src = ExitRoundedRed; }} onMouseLeave={(e) => { e.currentTarget.src = ExitRounded; }} /></span>
+                        <span className='icon'><img src={Logout} style={{ height: '25px', width: '25px' }} onMouseEnter={(e) => { e.currentTarget.src = LogoutRed; }} onMouseLeave={(e) => { e.currentTarget.src = Logout; }} /></span>
                         Log Out
                     </div>
                 </div>
