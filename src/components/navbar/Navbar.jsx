@@ -26,8 +26,8 @@ const Navbar = () => {
     const pageTitle = (() => {
         const p = location.pathname.toLowerCase();
         if (p.startsWith('/dashboard')) return 'Dashboard';
-    if (p.startsWith('/settings')) return 'Settings';
-    if (p.startsWith('/deployments')) return 'Deployments';
+        if (p.startsWith('/settings')) return 'Settings';
+        if (p.startsWith('/deployments')) return 'Deployments';
         if (p.startsWith('/check/')) return 'API Details';
         if (p.startsWith('/user')) return 'Profile';
         return '';

@@ -8,21 +8,36 @@
     overflow: hidden;
 }
 
-.terminal-shell::before { display: none; }
+.terminal-shell::before {
+    display: none;
+}
 
 .terminal-header {
     display: flex;
     align-items: center;
     gap: 8px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* removed glass-scaffold underlay after aligning Deployments to flat card look */
-.term-dot { width: 10px; height: 10px; border-radius: 50%; }
-.term-dot.red { background: #ff5f56; }
-.term-dot.yellow { background: #ffbd2e; }
-.term-dot.green { background: #27c93f; }
+.term-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.term-dot.red {
+    background: #ff5f56;
+}
+
+.term-dot.yellow {
+    background: #ffbd2e;
+}
+
+.term-dot.green {
+    background: #27c93f;
+}
 
 .terminal-body {
     font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
@@ -33,19 +48,34 @@
     padding: 12px 4px 12px 4px;
 }
 
-.terminal-line { white-space: pre-wrap; word-break: break-word; }
-.terminal-prompt { color: #4DA3FF; }
-.terminal-output { color: #DCE4F0; }
-.terminal-error { color: #FF7A7A; }
-.terminal-cwd { color: #a7b4c7; }
+.terminal-line {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.terminal-prompt {
+    color: #4DA3FF;
+}
+
+.terminal-output {
+    color: #DCE4F0;
+}
+
+.terminal-error {
+    color: #FF7A7A;
+}
+
+.terminal-cwd {
+    color: #a7b4c7;
+}
 
 .terminal-input-wrap {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-top: 8px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     padding: 8px 10px;
 }
@@ -75,10 +105,13 @@
 .btn-secondary {
     background: transparent;
     color: #DCE4F0;
-    border: 1px solid rgba(255,255,255,0.14);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
 }
 
-.cwd-display { color: #a7b4c7; font-size: 12px; }
+.cwd-display {
+    color: #a7b4c7;
+    font-size: 12px;
+}
