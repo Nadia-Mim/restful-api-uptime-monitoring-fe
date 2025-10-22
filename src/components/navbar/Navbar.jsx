@@ -11,6 +11,8 @@ import Logout from '../../icons/Logout.svg';
 import LogoutRed from '../../icons/LogoutRed.svg';
 import DeploymentsWhite from '../../icons/DeploymentsWhite.svg';
 import DeploymentsBlue from '../../icons/DeploymentsBlue.svg';
+import TerminalWhite from '../../icons/TerminalWhite.svg';
+import TerminalBlue from '../../icons/TerminalBlue.svg';
 import Systech from '../../images/Systech.png';
 import MenuBarsIcon from '../../icons/MenuBarsIcon.svg';
 
@@ -28,6 +30,7 @@ const Navbar = () => {
         if (p.startsWith('/dashboard')) return 'Dashboard';
         if (p.startsWith('/settings')) return 'Settings';
         if (p.startsWith('/deployments')) return 'Deployments';
+        if (p.startsWith('/terminal')) return 'Terminal';
         if (p.startsWith('/check/')) return 'API Details';
         if (p.startsWith('/user')) return 'Profile';
         return '';
@@ -53,6 +56,7 @@ const Navbar = () => {
         if (p.startsWith('/dashboard')) return 'Dashboard';
         if (p.startsWith('/settings')) return 'Settings';
         if (p.startsWith('/deployments')) return 'Deployments';
+        if (p.startsWith('/terminal')) return 'Terminal';
         if (p.startsWith('/user')) return 'User';
         return '';
     }, [location.pathname]);
@@ -119,6 +123,17 @@ const Navbar = () => {
                     </div>
                     <div
                         onClick={() => {
+                            setCurrentNavigation('Terminal');
+                            navigate('/terminal');
+                            setShowMobileNav(false);
+                        }}
+                        style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}
+                    >
+                        <span className='icon'><img src={activeKey === 'Terminal' ? TerminalBlue : TerminalWhite} style={{ height: '28px', width: '28px' }} /></span>
+                        Terminal
+                    </div>
+                    <div
+                        onClick={() => {
                             setCurrentNavigation('Settings');
                             navigate('/settings');
                             setShowMobileNav(false);
@@ -165,6 +180,12 @@ const Navbar = () => {
                     <li>
                         <Link to="/deployments">
                             <span className='icon'><img src={activeKey === 'Deployments' ? DeploymentsBlue : DeploymentsWhite} style={{ height: '28px', width: '28px' }} /></span>
+                            <span className='circle'></span>
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/terminal">
+                            <span className='icon'><img src={activeKey === 'Terminal' ? TerminalBlue : TerminalWhite} style={{ height: '28px', width: '28px' }} /></span>
                             <span className='circle'></span>
                         </Link>
                     </li>

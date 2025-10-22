@@ -15,6 +15,7 @@ const ApiDetails = React.lazy(() => import('./components/apiMonitoring/ApiDetail
 const UserProfile = React.lazy(() => import('./components/user/UserProfile'));
 const Settings = React.lazy(() => import('./components/settings/Settings'));
 const Deployments = React.lazy(() => import('./components/deployments/Deployments'));
+const TerminalPage = React.lazy(() => import('./components/terminal/TerminalPage'));
 
 let authData = JSON.parse(localStorage.getItem('authData'));
 
@@ -36,6 +37,7 @@ const routes = () => {
                                     <Route exact path='/dashboard' name="Dashboard" element={<Dashboard />} />
                                     <Route exact path='/check/:id' name="ApiDetails" element={<ApiDetails />} />
                                     <Route exact path='/deployments' name="Deployments" element={<Deployments />} />
+                                    <Route exact path='/terminal' name="Terminal" element={<TerminalPage />} />
                                     <Route exact path='/user' name="User" element={<UserProfile />} />
                                     <Route exact path='/settings' name="Settings" element={<Settings />} />
                                 </>
