@@ -53,8 +53,15 @@
     word-break: break-word;
 }
 
-.terminal-prompt {
-    color: #4DA3FF;
+.terminal-prompt,
+.terminal-cwd {
+    /* Vibrant gradient accent to match app vibe without flat blue */
+    background: linear-gradient(90deg, #8B5CF6, #06B6D4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 600;
 }
 
 .terminal-output {
@@ -65,9 +72,7 @@
     color: #FF7A7A;
 }
 
-.terminal-cwd {
-    color: #a7b4c7;
-}
+/* (cwd color merged into gradient rule above) */
 
 .terminal-input-wrap {
     display: flex;

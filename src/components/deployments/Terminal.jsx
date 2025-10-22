@@ -18,7 +18,12 @@ const Terminal = () => {
         if (!cwd) {
             (async () => {
                 const [ok, res] = await execCommand({ command: 'pwd' });
-                if (ok) setCwd(res?.stdout?.trim() || '');
+                if (ok) {
+                    const initialCwd = res?.stdout?.trim() || '';
+                    setCwd(initialCwd);
+                    // show an initial prompt in history so the user sees the path immediately
+                    setHistory((h) => (h.length === 0 ? [{ type: 'prompt', cwd: initialCwd }] : h));
+                }
             })();
         }
     }, []);
@@ -31,20 +36,44 @@ const Terminal = () => {
 
     const run = async (cmd) => {
         if (!cmd) return;
+        // Built-in: handle 'clear' locally without backend
+        if (cmd.trim() === 'clear') {
+            setHistory([]);
+            setIdx(-1);
+            setRunning(false);
+            if (inputRef.current) inputRef.current.focus();
+            return;
+        }
         setRunning(true);
-        setHistory((h) => [...h, { cmd }]);
-        const [ok, res] = await execCommand({ command: cmd, cwd });
+        const startCwd = cwd;
+        // echo the command into history: if the last entry is a prompt, replace it so
+        // the command shows on that prompt line; otherwise append a new cmd entry
+        setHistory((h) => {
+            const entry = { type: 'cmd', cwd: startCwd, cmd };
+            if (h.length > 0 && h[h.length - 1]?.type === 'prompt') {
+                const copy = [...h];
+                copy[copy.length - 1] = entry;
+                return copy;
+            }
+            return [...h, entry];
+        });
+        const [ok, res] = await execCommand({ command: cmd, cwd: startCwd });
         let item = { cmd, stdout: '', stderr: '', code: 0 };
+        let nextCwd = startCwd;
         if (ok) {
             item.stdout = res?.stdout || '';
             item.stderr = res?.stderr || '';
             item.code = res?.code || 0;
             if (cmd.startsWith('cd ')) {
                 // Try to keep cwd in sync by asking for pwd
-                const [ok2, res2] = await execCommand({ command: `cd ${cmd.slice(3)} && pwd`, cwd });
-                if (ok2) setCwd(res2?.stdout?.trim());
+                const [ok2, res2] = await execCommand({ command: `cd ${cmd.slice(3)} && pwd`, cwd: startCwd });
+                if (ok2) {
+                    nextCwd = (res2?.stdout || '').trim();
+                    setCwd(nextCwd);
+                }
             } else if (cmd === 'pwd') {
-                setCwd((res?.stdout || '').trim());
+                nextCwd = (res?.stdout || '').trim();
+                setCwd(nextCwd);
             }
         } else {
             item.stderr = res; // error message
@@ -57,6 +86,8 @@ const Terminal = () => {
         });
         setRunning(false);
         setIdx(-1);
+        // append a prompt-only line indicating readiness for the next command
+        setHistory((h) => [...h, { type: 'prompt', cwd: nextCwd }]);
         // ensure input stays focused after command completes
         if (inputRef.current) inputRef.current.focus();
     };
@@ -100,19 +131,31 @@ const Terminal = () => {
                 <div style={{ marginLeft: 'auto' }} className="cwd-display">{cwd}</div>
             </div>
             <div className="terminal-body" ref={termRef}>
-                {history.map((h, i) => (
-                    <div key={i} className="terminal-line">
-                        <span className="terminal-prompt">{authData?.userId || 'user'}@host</span>
-                        <span style={{ color: '#7b8798' }}>:</span>
-                        <span className="terminal-cwd">{cwd}</span>
-                        <span style={{ color: '#7b8798' }}>$</span> {h.cmd}
-                        {h.stdout ? <div className="terminal-output">{h.stdout}</div> : null}
-                        {h.stderr ? <div className="terminal-error">{h.stderr}</div> : null}
-                        {typeof h.code === 'number' && h.code !== 0 ? (
-                            <div className="terminal-error">exit code: {h.code}</div>
-                        ) : null}
-                    </div>
-                ))}
+                {history.map((h, i) => {
+                    if (h?.type === 'prompt') {
+                        return (
+                            <div key={i} className="terminal-line">
+                                <span className="terminal-prompt">{authData?.userId || 'user'}@host</span>
+                                <span style={{ color: '#7b8798' }}>:</span>
+                                <span className="terminal-cwd">{h.cwd || cwd}</span>
+                                <span style={{ color: '#7b8798' }}>$</span>
+                            </div>
+                        );
+                    }
+                    return (
+                        <div key={i} className="terminal-line">
+                            <span className="terminal-prompt">{authData?.userId || 'user'}@host</span>
+                            <span style={{ color: '#7b8798' }}>:</span>
+                            <span className="terminal-cwd">{h.cwd || cwd}</span>
+                            <span style={{ color: '#7b8798' }}>$</span> {h.cmd}
+                            {h.stdout ? <div className="terminal-output">{h.stdout}</div> : null}
+                            {h.stderr ? <div className="terminal-error">{h.stderr}</div> : null}
+                            {typeof h.code === 'number' && h.code !== 0 ? (
+                                <div className="terminal-error">exit code: {h.code}</div>
+                            ) : null}
+                        </div>
+                    );
+                })}
                 {running && <div className="terminal-output">Running...</div>}
             </div>
             <div className="terminal-input-wrap">
