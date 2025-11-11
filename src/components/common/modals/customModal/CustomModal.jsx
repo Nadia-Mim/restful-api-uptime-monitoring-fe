@@ -27,9 +27,9 @@ export const CustomModal = (props) => {
     };
 
     return (
-        <div className="response-modal" style={{ display: "block" }}>
+        <div className="response-modal" style={{ display: "flex" }}>
             {/* <!-- Modal content --> */}
-            <div className="response-modal-content" style={{ maxWidth: props?.size === "xl" ? '1140px' : props?.size === "lg" ? '800px' : '500px', ...props?.style }}>
+            <div className="response-modal-content glass-card" style={{ maxWidth: props?.size === "xl" ? '1140px' : props?.size === "lg" ? '800px' : '500px', ...props?.style }}>
                 {props?.children}
             </div>
         </div>

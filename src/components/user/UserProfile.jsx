@@ -38,18 +38,18 @@ const styles = {
         fontWeight: 600,
     },
     blueButton: {
-        background: 'transparent',
+        background: '#4545E6',
         width: '130px',
         padding: '10px',
         cursor: 'pointer',
-        borderRadius: '10px'
+        borderRadius: '5px'
     },
     redButton: {
-        background: 'transparent',
+        background: '#F52D2D',
         width: '55px',
         padding: '10px',
         cursor: 'pointer',
-        borderRadius: '10px'
+        borderRadius: '5px'
     },
     editIconStyle: {
         height: '20px',

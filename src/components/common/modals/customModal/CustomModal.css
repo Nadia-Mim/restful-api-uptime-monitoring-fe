@@ -4,40 +4,23 @@
 /* The Modal (background) */
 .response-modal {
     position: fixed;
-    /* Stay in place */
-    z-index: 100;
-    /* Sit on top */
-    padding-top: 10px;
-    /* Location of the box */
-    left: 0;
-    top: 0;
-    width: 100%;
-    /* Full width */
-    height: 100%;
-    /* Full height */
-    overflow: auto;
-    /* Enable scroll if needed */
-    background-color: rgb(0, 0, 0);
-    /* Fallback color */
-    background-color: rgba(7, 1, 27, 0.5);
-    /* Black w/ opacity */
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.45);
 }
 
 /* Modal Content */
 .response-modal-content {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #1E1F26;
+    position: relative;
     padding: 0;
     width: 95%;
     max-width: 800px;
     /* Let height be content-driven but cap with max-height */
     max-height: 90vh;
     overflow: hidden;
-    /* inner body scrolls */
-    box-shadow: 0px 8px 2rem #000;
     -webkit-animation-name: animatetop;
     -webkit-animation-duration: 0.8s;
     animation-name: animatetop;
@@ -47,25 +30,25 @@
 /* Add Animation */
 @-webkit-keyframes animatetop {
     from {
-        top: calc(50% - 300px);
         opacity: 0;
+        transform: translateY(-8px);
     }
 
     to {
-        top: 50%;
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
 @keyframes animatetop {
     from {
-        top: calc(50% - 300px);
         opacity: 0;
+        transform: translateY(-8px);
     }
 
     to {
-        top: 50%;
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -88,6 +71,8 @@
     padding: 12px 16px 12px 16px;
     font-size: 17px;
     font-weight: 500;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    color: #DCE4F0;
 }
 
 .response-modal-body {
