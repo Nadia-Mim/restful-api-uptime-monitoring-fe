@@ -3,6 +3,7 @@ import Select from 'react-select';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
 import ConfirmDialog from '../common/modals/ConfirmDialog';
 import JobLogsModal from './JobLogsModal';
+import JobHistory from './JobHistory';
 import Loader from '../common/loader/Loader';
 import { listDeploymentProjects } from '../../api/deploymentProjects/GET';
 import { listPipelineTemplates } from '../../api/pipelines/GET';
@@ -69,7 +70,7 @@ const styles = {
 
 const Deployments = () => {
     const [environment, setEnvironment] = useState('dev');
-    const [activeTab, setActiveTab] = useState('projects'); // 'projects' | 'pipelines' | 'agents'
+    const [activeTab, setActiveTab] = useState('projects'); // 'projects' | 'pipelines' | 'agents' | 'history'
     const [loading, setLoading] = useState(false);
     const [projects, setProjects] = useState([]);
     const [templates, setTemplates] = useState([]);
@@ -161,22 +162,94 @@ const Deployments = () => {
     useEffect(() => { reload(); }, [environment, activeTab]);
 
     const addProject = async () => {
+        // Validate required fields
+        if (!form.name?.trim()) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Project name is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+        if (!form.repoUrl?.trim()) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Repository URL is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+        if (!form.pipelineTemplateId) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Pipeline template is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        // Validate enabled targets
+        const enabledTargets = form.deploymentTargets.filter(t => t.enabled);
+        if (enabledTargets.length === 0) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'At least one deployment target must be enabled.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        for (const target of enabledTargets) {
+            if (!target.agentId) {
+                setConfirmDialog({
+                    visible: true,
+                    title: '⚠️ Validation Error',
+                    message: `Agent is required for ${target.environment} environment.`,
+                    type: 'warning',
+                    confirmText: 'OK',
+                    onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                });
+                return;
+            }
+            if (!target.deployPath?.trim()) {
+                setConfirmDialog({
+                    visible: true,
+                    title: '⚠️ Validation Error',
+                    message: `Deploy path is required for ${target.environment} environment.`,
+                    type: 'warning',
+                    confirmText: 'OK',
+                    onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                });
+                return;
+            }
+        }
+
         const payload = {
             name: form.name,
             repoUrl: form.repoUrl,
             branch: form.branch || 'main',
             pipelineTemplateId: form.pipelineTemplateId || '',
-            deploymentTargets: form.deploymentTargets
-                .filter(t => t.enabled)
-                .map(t => ({
-                    agentId: t.agentId || '',
-                    environment: t.environment,
-                    artifacts: t.artifacts ? t.artifacts.split(',').map(s => s.trim()).filter(Boolean) : [],
-                    deployPath: t.deployPath || '',
-                    autoStart: t.autoStart || false,
-                }))
+            deploymentTargets: enabledTargets.map(t => ({
+                agentId: t.agentId || '',
+                environment: t.environment,
+                artifacts: t.artifacts ? t.artifacts.split(',').map(s => s.trim()).filter(Boolean) : [],
+                deployPath: t.deployPath || '',
+                autoStart: t.autoStart || false,
+            }))
         };
-        const [ok] = await createDeploymentProject(payload);
+        const [ok, result] = await createDeploymentProject(payload);
         if (ok) {
             setShowAdd(false);
             setForm({
@@ -191,6 +264,15 @@ const Deployments = () => {
                 ]
             });
             reload();
+        } else {
+            setConfirmDialog({
+                visible: true,
+                title: '❌ Error',
+                message: result || 'Failed to create project',
+                type: 'danger',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
         }
     };
 
@@ -203,8 +285,21 @@ const Deployments = () => {
             confirmText: 'Delete',
             onConfirm: async () => {
                 setConfirmDialog({ ...confirmDialog, visible: false });
-                const [ok] = await deleteDeploymentProject(project._id);
-                if (ok) reload();
+                const [ok, result] = await deleteDeploymentProject(project._id);
+                if (ok) {
+                    reload();
+                } else {
+                    setTimeout(() => {
+                        setConfirmDialog({
+                            visible: true,
+                            title: '❌ Error',
+                            message: result || 'Failed to delete project',
+                            type: 'danger',
+                            confirmText: 'OK',
+                            onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                        });
+                    }, 100);
+                }
             }
         });
     };
@@ -232,7 +327,7 @@ const Deployments = () => {
         // Initialize deployment targets with all environments, marking existing ones as enabled
         const existingTargets = proj?.deploymentTargets || [];
         const allEnvironments = ['dev', 'staging', 'production'];
-        
+
         const deploymentTargets = allEnvironments.map(env => {
             const existing = existingTargets.find(t => t.environment === env);
             if (existing) {
@@ -267,43 +362,159 @@ const Deployments = () => {
     };
 
     const saveEditedProject = async () => {
+        // Validate required fields
+        if (!editProjectForm.name?.trim()) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Project name is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+        if (!editProjectForm.repoUrl?.trim()) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Repository URL is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+        if (!editProjectForm.pipelineTemplateId) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Pipeline template is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        // Validate enabled targets
+        const enabledTargets = editProjectForm.deploymentTargets.filter(t => t.enabled);
+        if (enabledTargets.length === 0) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'At least one deployment target must be enabled.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        for (const target of enabledTargets) {
+            if (!target.agentId) {
+                setConfirmDialog({
+                    visible: true,
+                    title: '⚠️ Validation Error',
+                    message: `Agent is required for ${target.environment} environment.`,
+                    type: 'warning',
+                    confirmText: 'OK',
+                    onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                });
+                return;
+            }
+            if (!target.deployPath?.trim()) {
+                setConfirmDialog({
+                    visible: true,
+                    title: '⚠️ Validation Error',
+                    message: `Deploy path is required for ${target.environment} environment.`,
+                    type: 'warning',
+                    confirmText: 'OK',
+                    onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                });
+                return;
+            }
+        }
+
         const payload = {
             _id: showEditProject._id,
             name: editProjectForm.name,
             repoUrl: editProjectForm.repoUrl,
             branch: editProjectForm.branch,
             pipelineTemplateId: editProjectForm.pipelineTemplateId || '',
-            deploymentTargets: editProjectForm.deploymentTargets
-                .filter(t => t.enabled)
-                .map(t => ({
-                    agentId: t.agentId || '',
-                    environment: t.environment,
-                    artifacts: t.artifacts ? t.artifacts.split(',').map(s => s.trim()).filter(Boolean) : [],
-                    deployPath: t.deployPath || '',
-                    autoStart: t.autoStart || false,
-                }))
+            deploymentTargets: enabledTargets.map(t => ({
+                agentId: t.agentId || '',
+                environment: t.environment,
+                artifacts: t.artifacts ? t.artifacts.split(',').map(s => s.trim()).filter(Boolean) : [],
+                deployPath: t.deployPath || '',
+                autoStart: t.autoStart || false,
+            }))
         };
-        const [ok] = await updateDeploymentProject(payload);
+        const [ok, result] = await updateDeploymentProject(payload);
         if (ok) {
             setShowEditProject(null);
             reload();
+        } else {
+            setConfirmDialog({
+                visible: true,
+                title: '❌ Error',
+                message: result || 'Failed to update project',
+                type: 'danger',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
         }
     };
 
     const saveNewPipeline = async () => {
+        // Validate required fields
+        if (!pipelineForm.templateName?.trim()) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Template name is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        const buildCommands = pipelineForm.buildCommands.split('\n').map(s => s.trim()).filter(Boolean);
+        if (buildCommands.length === 0) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'At least one build command is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
         const payload = {
             templateName: pipelineForm.templateName,
             language: pipelineForm.language,
             framework: pipelineForm.framework,
             defaultBranch: pipelineForm.defaultBranch || 'main',
-            buildCommands: pipelineForm.buildCommands.split('\n').map(s => s.trim()).filter(Boolean),
+            buildCommands: buildCommands,
             runCommands: pipelineForm.runCommands.split('\n').map(s => s.trim()).filter(Boolean),
             stopCommands: pipelineForm.stopCommands.split('\n').map(s => s.trim()).filter(Boolean),
         };
-        const [ok] = await createPipelineTemplate(payload);
+        const [ok, result] = await createPipelineTemplate(payload);
         if (ok) {
             setShowAddPipeline(false);
             reload();
+        } else {
+            setConfirmDialog({
+                visible: true,
+                title: '❌ Error',
+                message: result || 'Failed to create pipeline',
+                type: 'danger',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
         }
     };
 
@@ -321,20 +532,55 @@ const Deployments = () => {
     };
 
     const saveEditedPipeline = async () => {
+        // Validate required fields
+        if (!pipelineForm.templateName?.trim()) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'Template name is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        const buildCommands = pipelineForm.buildCommands.split('\n').map(s => s.trim()).filter(Boolean);
+        if (buildCommands.length === 0) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Validation Error',
+                message: 'At least one build command is required.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
         const payload = {
             _id: showEditPipeline._id,
             templateName: pipelineForm.templateName,
             language: pipelineForm.language,
             framework: pipelineForm.framework,
             defaultBranch: pipelineForm.defaultBranch || 'main',
-            buildCommands: pipelineForm.buildCommands.split('\n').map(s => s.trim()).filter(Boolean),
+            buildCommands: buildCommands,
             runCommands: pipelineForm.runCommands.split('\n').map(s => s.trim()).filter(Boolean),
             stopCommands: pipelineForm.stopCommands.split('\n').map(s => s.trim()).filter(Boolean),
         };
-        const [ok] = await updatePipelineTemplate(payload);
+        const [ok, result] = await updatePipelineTemplate(payload);
         if (ok) {
             setShowEditPipeline(null);
             reload();
+        } else {
+            setConfirmDialog({
+                visible: true,
+                title: '❌ Error',
+                message: result || 'Failed to update pipeline',
+                type: 'danger',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
         }
     };
 
@@ -347,8 +593,21 @@ const Deployments = () => {
             confirmText: 'Delete',
             onConfirm: async () => {
                 setConfirmDialog({ ...confirmDialog, visible: false });
-                const [ok] = await deletePipelineTemplate(template._id);
-                if (ok) reload();
+                const [ok, result] = await deletePipelineTemplate(template._id);
+                if (ok) {
+                    reload();
+                } else {
+                    setTimeout(() => {
+                        setConfirmDialog({
+                            visible: true,
+                            title: '❌ Error',
+                            message: result || 'Failed to delete pipeline',
+                            type: 'danger',
+                            confirmText: 'OK',
+                            onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                        });
+                    }, 100);
+                }
             }
         });
     };
@@ -378,6 +637,13 @@ const Deployments = () => {
                     onClick={() => setActiveTab('agents')}
                 >
                     Agents
+                </button>
+                <button
+                    className={`tab ${activeTab === 'history' ? 'active' : ''}`}
+                    aria-selected={activeTab === 'history'}
+                    onClick={() => setActiveTab('history')}
+                >
+                    Job History
                 </button>
             </div>
 
@@ -448,8 +714,38 @@ const Deployments = () => {
                                                         const stopKey = `stop-${p._id}-${target.environment}`;
                                                         const restartKey = `restart-${p._id}-${target.environment}`;
                                                         const isDeployLoading = actionLoading[deployKey];
-                                                        
+                                                        const agentOnline = agentStatus[target.agentId]?.status === 'online';
+
                                                         const handleDeploy = async () => {
+                                                            // Check agent status
+                                                            if (!agentOnline) {
+                                                                setConfirmDialog({
+                                                                    visible: true,
+                                                                    title: '⚠️ Agent Offline',
+                                                                    message: `Agent "${agent?.name || 'Unknown'}" appears to be offline.\n\nDeployment may fail if the agent is not running. Do you want to proceed anyway?`,
+                                                                    type: 'warning',
+                                                                    confirmText: 'Deploy Anyway',
+                                                                    onConfirm: () => {
+                                                                        setConfirmDialog({ ...confirmDialog, visible: false });
+                                                                        if (target.environment === 'production') {
+                                                                            // Show production confirmation
+                                                                            setTimeout(() => {
+                                                                                setConfirmDialog({
+                                                                                    visible: true,
+                                                                                    title: '🚀 Deploy to Production',
+                                                                                    message: `Are you sure you want to deploy "${p.name}" to PRODUCTION on ${agent?.name || 'agent'}?\n\nThis will update the live production environment.`,
+                                                                                    type: 'danger',
+                                                                                    onConfirm: () => executeDeploy(p, target, agent, deployKey)
+                                                                                });
+                                                                            }, 100);
+                                                                        } else {
+                                                                            executeDeploy(p, target, agent, deployKey);
+                                                                        }
+                                                                    }
+                                                                });
+                                                                return;
+                                                            }
+
                                                             // Production requires confirmation
                                                             if (target.environment === 'production') {
                                                                 setConfirmDialog({
@@ -467,16 +763,16 @@ const Deployments = () => {
                                                         const executeDeploy = async (project, target, agent, loadingKey) => {
                                                             setConfirmDialog({ ...confirmDialog, visible: false });
                                                             setActionLoading({ ...actionLoading, [loadingKey]: true });
-                                                            
+
                                                             const { dispatchJob } = await import('../../api/jobs/POST');
                                                             const [ok, data] = await dispatchJob({
                                                                 projectId: project._id,
                                                                 environment: target.environment,
                                                                 type: 'deploy'
                                                             });
-                                                            
+
                                                             setActionLoading({ ...actionLoading, [loadingKey]: false });
-                                                            
+
                                                             if (ok && data?.jobId) {
                                                                 // Open live logs modal
                                                                 setJobLogsModal({
@@ -493,7 +789,7 @@ const Deployments = () => {
                                                                 setConfirmDialog({
                                                                     visible: true,
                                                                     title: '❌ Deployment Failed',
-                                                                    message: 'Failed to start deployment. Please check your configuration and try again.',
+                                                                    message: data || 'Failed to start deployment. Please check your configuration and try again.',
                                                                     type: 'danger',
                                                                     onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
                                                                 });
@@ -503,13 +799,13 @@ const Deployments = () => {
                                                         const handleServiceAction = async (type, loadingKey) => {
                                                             setActionLoading({ ...actionLoading, [loadingKey]: true });
                                                             const { dispatchJob } = await import('../../api/jobs/POST');
-                                                            const [ok, data] = await dispatchJob({ 
-                                                                projectId: p._id, 
-                                                                environment: target.environment, 
-                                                                type 
+                                                            const [ok, data] = await dispatchJob({
+                                                                projectId: p._id,
+                                                                environment: target.environment,
+                                                                type
                                                             });
                                                             setActionLoading({ ...actionLoading, [loadingKey]: false });
-                                                            
+
                                                             if (ok && data?.jobId) {
                                                                 setJobLogsModal({
                                                                     visible: true,
@@ -520,6 +816,14 @@ const Deployments = () => {
                                                                         type: type,
                                                                         agentName: agent?.name
                                                                     }
+                                                                });
+                                                            } else {
+                                                                setConfirmDialog({
+                                                                    visible: true,
+                                                                    title: '❌ Action Failed',
+                                                                    message: data || `Failed to ${type} service.`,
+                                                                    type: 'danger',
+                                                                    onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
                                                                 });
                                                             }
                                                         };
@@ -556,11 +860,11 @@ const Deployments = () => {
                                                                     <img
                                                                         src={RunIcon}
                                                                         alt="Start"
-                                                                        style={{ 
-                                                                            width: 22, 
-                                                                            height: 22, 
-                                                                            cursor: actionLoading[startKey] ? 'not-allowed' : 'pointer', 
-                                                                            opacity: actionLoading[startKey] ? 0.4 : 0.9 
+                                                                        style={{
+                                                                            width: 22,
+                                                                            height: 22,
+                                                                            cursor: actionLoading[startKey] ? 'not-allowed' : 'pointer',
+                                                                            opacity: actionLoading[startKey] ? 0.4 : 0.9
                                                                         }}
                                                                         onClick={() => !actionLoading[startKey] && handleServiceAction('start', startKey)}
                                                                         title="Start service"
@@ -570,11 +874,11 @@ const Deployments = () => {
                                                                     <img
                                                                         src={StopIcon}
                                                                         alt="Stop"
-                                                                        style={{ 
-                                                                            width: 22, 
-                                                                            height: 22, 
-                                                                            cursor: actionLoading[stopKey] ? 'not-allowed' : 'pointer', 
-                                                                            opacity: actionLoading[stopKey] ? 0.4 : 0.9 
+                                                                        style={{
+                                                                            width: 22,
+                                                                            height: 22,
+                                                                            cursor: actionLoading[stopKey] ? 'not-allowed' : 'pointer',
+                                                                            opacity: actionLoading[stopKey] ? 0.4 : 0.9
                                                                         }}
                                                                         onClick={() => !actionLoading[stopKey] && handleServiceAction('stop', stopKey)}
                                                                         title="Stop service"
@@ -584,11 +888,11 @@ const Deployments = () => {
                                                                     <img
                                                                         src={RestartIcon}
                                                                         alt="Restart"
-                                                                        style={{ 
-                                                                            width: 22, 
-                                                                            height: 22, 
-                                                                            cursor: actionLoading[restartKey] ? 'not-allowed' : 'pointer', 
-                                                                            opacity: actionLoading[restartKey] ? 0.4 : 0.9 
+                                                                        style={{
+                                                                            width: 22,
+                                                                            height: 22,
+                                                                            cursor: actionLoading[restartKey] ? 'not-allowed' : 'pointer',
+                                                                            opacity: actionLoading[restartKey] ? 0.4 : 0.9
                                                                         }}
                                                                         onClick={() => !actionLoading[restartKey] && handleServiceAction('restart', restartKey)}
                                                                         title="Restart service"
@@ -735,6 +1039,29 @@ const Deployments = () => {
                             <div>No agents registered yet.</div>
                         )
                     )}
+                </div>
+            )}
+
+            {/* Job History tab */}
+            {activeTab === 'history' && (
+                <div style={{ marginBottom: '12px' }}>
+                    <JobHistory
+                        projects={projects}
+                        agents={agents}
+                        onViewLogs={(job, project, agent) => {
+                            setJobLogsModal({
+                                visible: true,
+                                jobId: job.jobId,
+                                jobInfo: {
+                                    projectName: project?.name || job.projectId,
+                                    environment: job.payload?.environment,
+                                    type: job.type,
+                                    agentName: agent?.name
+                                }
+                            });
+                        }}
+                        selectStyle={styles.selectStyle}
+                    />
                 </div>
             )}
 
@@ -1168,9 +1495,46 @@ const Deployments = () => {
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14 }}>
                             <button className="btn btn-secondary" onClick={() => setShowAddAgent(false)}>Cancel</button>
                             <div style={styles.blueButton} onClick={async () => {
+                                // Validate required fields
+                                if (!agentForm.name?.trim()) {
+                                    setConfirmDialog({
+                                        visible: true,
+                                        title: '⚠️ Validation Error',
+                                        message: 'Agent name is required.',
+                                        type: 'warning',
+                                        confirmText: 'OK',
+                                        onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                                    });
+                                    return;
+                                }
+                                if (!agentForm.hostType) {
+                                    setConfirmDialog({
+                                        visible: true,
+                                        title: '⚠️ Validation Error',
+                                        message: 'Host type is required.',
+                                        type: 'warning',
+                                        confirmText: 'OK',
+                                        onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                                    });
+                                    return;
+                                }
+
                                 const { registerAgent } = await import('../../api/agents/POST');
-                                const [ok] = await registerAgent(agentForm);
-                                if (ok) { setShowAddAgent(false); setAgentForm({ name: '', hostType: 'Linux', description: '' }); reload(); }
+                                const [ok, result] = await registerAgent(agentForm);
+                                if (ok) {
+                                    setShowAddAgent(false);
+                                    setAgentForm({ name: '', hostType: 'Linux', description: '' });
+                                    reload();
+                                } else {
+                                    setConfirmDialog({
+                                        visible: true,
+                                        title: '❌ Error',
+                                        message: result || 'Failed to register agent',
+                                        type: 'danger',
+                                        confirmText: 'OK',
+                                        onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                                    });
+                                }
                             }}>Register</div>
                         </div>
                     </CustomModalBody>
