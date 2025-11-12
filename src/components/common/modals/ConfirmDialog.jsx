@@ -1,5 +1,5 @@
 import React from 'react';
-import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
+import { CustomModal, CustomModalBody, CustomModalHeader } from './customModal/CustomModal';
 
 /**
  * ConfirmDialog - Reusable confirmation modal

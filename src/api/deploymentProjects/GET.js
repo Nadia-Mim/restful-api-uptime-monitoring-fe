@@ -10,3 +10,12 @@ export const listDeploymentProjects = async (environment) => {
         return [false, err?.response?.data?.error || 'Failed to load projects'];
     }
 };
+
+export const getProjectDetails = async (projectId) => {
+    try {
+        const res = await axios.get(`${Server.baseApi}/deploymentProjects?id=${projectId}`);
+        return [true, res?.data?.data || null];
+    } catch (err) {
+        return [false, err?.response?.data?.error || 'Failed to load project details'];
+    }
+};
