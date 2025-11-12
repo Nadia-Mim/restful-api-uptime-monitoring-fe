@@ -208,22 +208,24 @@ const ProjectsTab = ({
 
                                                 return (
                                                     <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                                                        <span className={`glass-badge ${target.environment === 'production' ? 'danger' : 'info'}`} style={{ fontSize: 11, padding: '2px 8px' }}>
-                                                            {target.environment.toUpperCase()}
-                                                        </span>
-                                                        <div style={{ display: 'flex', gap: 6 }}>
+                                                        <div
+                                                            className={`glass-badge ${target.environment === 'production' ? 'danger' : 'info'}`} style={{ fontSize: 11, padding: '4px 8px', gap: 8, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                                                            title={`Deploy to ${target.environment}`}
+                                                        >
                                                             <img
                                                                 src={RunIcon}
                                                                 alt="Deploy"
                                                                 style={{
-                                                                    width: 22,
-                                                                    height: 22,
+                                                                    width: 15,
+                                                                    height: 15,
                                                                     cursor: actionLoading[deployKey] ? 'not-allowed' : 'pointer',
                                                                     opacity: actionLoading[deployKey] ? 0.4 : 0.9
                                                                 }}
                                                                 onClick={() => !actionLoading[deployKey] && handleDeploy()}
-                                                                title={`Deploy to ${target.environment}`}
                                                             />
+                                                            {target.environment.toUpperCase()}
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: 6 }}>
                                                             {pipeline?.runCommands?.length > 0 && (
                                                                 <img
                                                                     src={RunIcon}
