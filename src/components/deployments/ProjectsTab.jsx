@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import EditIcon from '../../icons/EditIcon.svg';
 import DetailsIcon from '../../icons/DetailsIcon.svg';
@@ -21,13 +22,14 @@ const ProjectsTab = ({
     actionLoading,
     styles,
     openEditProject,
-    setProjectDetailsModal,
     removeProject,
     setConfirmDialog,
     confirmDialog,
     setJobLogsModal,
     setActionLoading
 }) => {
+    const navigate = useNavigate();
+
     return (
         <div style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
@@ -284,7 +286,7 @@ const ProjectsTab = ({
                                         style={{ cursor: 'pointer', height: '18px', width: '18px' }}
                                         alt='Details'
                                         title='View Details'
-                                        onClick={() => setProjectDetailsModal({ visible: true, projectId: p._id })}
+                                        onClick={() => navigate(`/deployments/projects/${p._id}`)}
                                     />
                                     <img
                                         src={DeleteIcon}

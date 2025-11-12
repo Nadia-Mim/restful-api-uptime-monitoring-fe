@@ -1,4 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import DetailsIcon from '../../icons/DetailsIcon.svg';
+import DeleteIcon from '../../icons/DeleteIcon.svg';
 import EmptyScreen from '../common/emptyScreen/EmptyScreen';
 
 const AgentsTab = ({
@@ -7,10 +10,12 @@ const AgentsTab = ({
     agentStatus,
     styles,
     openAddAgent,
-    setAgentDetailsModal,
     setShowDownloadAgent,
-    setAgentStatus
+    setAgentStatus,
+    removeAgent
 }) => {
+    const navigate = useNavigate();
+
     return (
         <div style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
@@ -80,6 +85,22 @@ const AgentsTab = ({
                                         ⚠️ Agent not responding.
                                     </div>
                                 )}
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 'auto', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <img
+                                        src={DetailsIcon}
+                                        style={{ cursor: 'pointer', height: '18px', width: '18px' }}
+                                        alt='Details'
+                                        title='View Details'
+                                        onClick={() => navigate(`/deployments/agents/${a._id}`)}
+                                    />
+                                    <img
+                                        src={DeleteIcon}
+                                        style={{ cursor: 'pointer' }}
+                                        alt='Delete'
+                                        title='Delete Agent'
+                                        onClick={() => removeAgent(a)}
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>

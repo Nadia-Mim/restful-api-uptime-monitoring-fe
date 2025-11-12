@@ -3,8 +3,6 @@ import Select from 'react-select';
 import ConfirmDialog from '../common/modals/ConfirmDialog';
 import JobLogsModal from './JobLogsModal';
 import JobHistory from './JobHistory';
-import ProjectDetailsModal from './ProjectDetailsModal';
-import AgentDetailsModal from './AgentDetailsModal';
 import Loader from '../common/loader/Loader';
 import ProjectsTab from './ProjectsTab';
 import PipelinesTab from './PipelinesTab';
@@ -118,8 +116,6 @@ const Deployments = () => {
 
     const [showDownloadAgent, setShowDownloadAgent] = useState(null);
     const [jobLogsModal, setJobLogsModal] = useState({ visible: false, jobId: null, jobInfo: {} });
-    const [projectDetailsModal, setProjectDetailsModal] = useState({ visible: false, projectId: null });
-    const [agentDetailsModal, setAgentDetailsModal] = useState({ visible: false, agentId: null });
     const [confirmDialog, setConfirmDialog] = useState({
         visible: false,
         title: '',
@@ -500,6 +496,35 @@ const Deployments = () => {
         });
     };
 
+    const removeAgent = (agent) => {
+        setConfirmDialog({
+            visible: true,
+            title: '🗑️ Delete Agent',
+            message: `Are you sure you want to delete agent "${agent.name}"?\n\nThis action cannot be undone. Projects using this agent will need to be reconfigured.`,
+            type: 'danger',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                setConfirmDialog({ ...confirmDialog, visible: false });
+                const { deleteAgent } = await import('../../api/agents/DELETE');
+                const [ok, result] = await deleteAgent(agent._id);
+                if (ok) {
+                    reload();
+                } else {
+                    setTimeout(() => {
+                        setConfirmDialog({
+                            visible: true,
+                            title: '❌ Error',
+                            message: result || 'Failed to delete agent',
+                            type: 'danger',
+                            confirmText: 'OK',
+                            onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                        });
+                    }, 100);
+                }
+            }
+        });
+    };
+
     // Agent handlers
     const openAddAgent = () => {
         setIsEditingAgent(false);
@@ -590,7 +615,6 @@ const Deployments = () => {
                     openAddProject={openAddProject}
                     openEditProject={openEditProject}
                     removeProject={removeProject}
-                    setProjectDetailsModal={setProjectDetailsModal}
                     setConfirmDialog={setConfirmDialog}
                     confirmDialog={confirmDialog}
                     setJobLogsModal={setJobLogsModal}
@@ -618,9 +642,9 @@ const Deployments = () => {
                     loading={loading}
                     styles={styles}
                     openAddAgent={openAddAgent}
-                    setAgentDetailsModal={setAgentDetailsModal}
                     setShowDownloadAgent={setShowDownloadAgent}
                     setAgentStatus={setAgentStatus}
+                    removeAgent={removeAgent}
                 />
             )}
 
@@ -699,18 +723,6 @@ const Deployments = () => {
                 jobId={jobLogsModal.jobId}
                 jobInfo={jobLogsModal.jobInfo}
                 onClose={() => setJobLogsModal({ visible: false, jobId: null, jobInfo: {} })}
-            />
-
-            <ProjectDetailsModal
-                visible={projectDetailsModal.visible}
-                projectId={projectDetailsModal.projectId}
-                onClose={() => setProjectDetailsModal({ visible: false, projectId: null })}
-            />
-
-            <AgentDetailsModal
-                visible={agentDetailsModal.visible}
-                agentId={agentDetailsModal.agentId}
-                onClose={() => setAgentDetailsModal({ visible: false, agentId: null })}
             />
 
             <ConfirmDialog
