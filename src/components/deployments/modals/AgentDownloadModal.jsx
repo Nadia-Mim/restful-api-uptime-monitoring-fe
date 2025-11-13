@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../../common/modals/customModal/CustomModal';
 
@@ -9,6 +9,21 @@ const AgentDownloadModal = ({
     styles
 }) => {
     const [downloadOs, setDownloadOs] = useState('linux');
+
+    // Reset downloadOs to agent's hostType when modal opens or agent changes
+    useEffect(() => {
+        if (agent?.hostType) {
+            const normalizedHostType = agent.hostType.toLowerCase();
+            // Map common host type values to our OS options
+            if (normalizedHostType.includes('mac') || normalizedHostType.includes('darwin')) {
+                setDownloadOs('macos');
+            } else if (normalizedHostType.includes('win')) {
+                setDownloadOs('windows');
+            } else {
+                setDownloadOs('linux');
+            }
+        }
+    }, [agent]);
 
     if (!visible || !agent) return null;
 
