@@ -107,6 +107,193 @@ const ProjectModal = ({
                                                 placeholder="Select Agent"
                                             />
                                         </div>
+
+                                        {/* Docker Port Configuration */}
+                                        <div style={{ padding: '10px', background: 'rgba(58, 134, 255, 0.1)', borderRadius: '6px', border: '1px solid rgba(58, 134, 255, 0.2)' }}>
+                                            <div style={{ fontSize: 11, color: '#58a6ff', marginBottom: 8, fontWeight: 600 }}>
+                                                🐳 Docker Port Configuration
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                                <div>
+                                                    <div style={{ fontSize: 10, color: '#9fb0c6', marginBottom: 4 }}>Host Port *</div>
+                                                    <input
+                                                        className="glass-input"
+                                                        type="number"
+                                                        placeholder="e.g., 8001"
+                                                        value={target.port || ''}
+                                                        onChange={(e) => {
+                                                            const newTargets = [...form.deploymentTargets];
+                                                            newTargets[idx].port = e.target.value ? parseInt(e.target.value) : '';
+                                                            setForm({ ...form, deploymentTargets: newTargets });
+                                                        }}
+                                                        style={{ ...styles.inputFieldStyle, fontSize: 12 }}
+                                                    />
+                                                    <div style={{ fontSize: 9, color: '#7a8fa5', marginTop: 2 }}>
+                                                        External port to access app
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: 10, color: '#9fb0c6', marginBottom: 4 }}>Container Port</div>
+                                                    <input
+                                                        className="glass-input"
+                                                        type="number"
+                                                        placeholder="3000 (default)"
+                                                        value={target.containerPort || ''}
+                                                        onChange={(e) => {
+                                                            const newTargets = [...form.deploymentTargets];
+                                                            newTargets[idx].containerPort = e.target.value ? parseInt(e.target.value) : '';
+                                                            setForm({ ...form, deploymentTargets: newTargets });
+                                                        }}
+                                                        style={{ ...styles.inputFieldStyle, fontSize: 12 }}
+                                                    />
+                                                    <div style={{ fontSize: 9, color: '#7a8fa5', marginTop: 2 }}>
+                                                        Internal app port
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Docker Environment Variables */}
+                                            <div style={{ marginTop: 10 }}>
+                                                <div style={{ fontSize: 10, color: '#9fb0c6', marginBottom: 6 }}>
+                                                    Environment Variables (for Docker container)
+                                                </div>
+                                                {(target.dockerEnvVars || []).map((env, envIdx) => (
+                                                    <div key={envIdx} style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                                                        <input
+                                                            className="glass-input"
+                                                            placeholder="Key"
+                                                            value={env.key || ''}
+                                                            onChange={(e) => {
+                                                                const newTargets = [...form.deploymentTargets];
+                                                                const envVars = [...(newTargets[idx].dockerEnvVars || [])];
+                                                                envVars[envIdx] = { ...envVars[envIdx], key: e.target.value };
+                                                                newTargets[idx].dockerEnvVars = envVars;
+                                                                setForm({ ...form, deploymentTargets: newTargets });
+                                                            }}
+                                                            style={{ ...styles.inputFieldStyle, flex: 1, fontSize: 11 }}
+                                                        />
+                                                        <input
+                                                            className="glass-input"
+                                                            placeholder="Value"
+                                                            value={env.value || ''}
+                                                            onChange={(e) => {
+                                                                const newTargets = [...form.deploymentTargets];
+                                                                const envVars = [...(newTargets[idx].dockerEnvVars || [])];
+                                                                envVars[envIdx] = { ...envVars[envIdx], value: e.target.value };
+                                                                newTargets[idx].dockerEnvVars = envVars;
+                                                                setForm({ ...form, deploymentTargets: newTargets });
+                                                            }}
+                                                            style={{ ...styles.inputFieldStyle, flex: 1, fontSize: 11 }}
+                                                        />
+                                                        <button
+                                                            className="btn btn-secondary"
+                                                            onClick={() => {
+                                                                const newTargets = [...form.deploymentTargets];
+                                                                const envVars = [...(newTargets[idx].dockerEnvVars || [])];
+                                                                envVars.splice(envIdx, 1);
+                                                                newTargets[idx].dockerEnvVars = envVars;
+                                                                setForm({ ...form, deploymentTargets: newTargets });
+                                                            }}
+                                                            style={{ fontSize: 10, padding: '2px 6px' }}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    className="btn btn-secondary"
+                                                    onClick={() => {
+                                                        const newTargets = [...form.deploymentTargets];
+                                                        newTargets[idx].dockerEnvVars = [...(newTargets[idx].dockerEnvVars || []), { key: '', value: '' }];
+                                                        setForm({ ...form, deploymentTargets: newTargets });
+                                                    }}
+                                                    style={{ fontSize: 10, padding: '4px 8px', marginTop: 4 }}
+                                                >
+                                                    + Add Env Var
+                                                </button>
+                                            </div>
+
+                                            {/* Docker Volumes */}
+                                            <div style={{ marginTop: 10 }}>
+                                                <div style={{ fontSize: 10, color: '#9fb0c6', marginBottom: 6 }}>
+                                                    Volume Mounts (optional)
+                                                </div>
+                                                {(target.dockerVolumes || []).map((vol, volIdx) => (
+                                                    <div key={volIdx} style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                                                        <input
+                                                            className="glass-input"
+                                                            placeholder="Host Path"
+                                                            value={vol.host || ''}
+                                                            onChange={(e) => {
+                                                                const newTargets = [...form.deploymentTargets];
+                                                                const volumes = [...(newTargets[idx].dockerVolumes || [])];
+                                                                volumes[volIdx] = { ...volumes[volIdx], host: e.target.value };
+                                                                newTargets[idx].dockerVolumes = volumes;
+                                                                setForm({ ...form, deploymentTargets: newTargets });
+                                                            }}
+                                                            style={{ ...styles.inputFieldStyle, flex: 1, fontSize: 11 }}
+                                                        />
+                                                        <input
+                                                            className="glass-input"
+                                                            placeholder="Container Path"
+                                                            value={vol.container || ''}
+                                                            onChange={(e) => {
+                                                                const newTargets = [...form.deploymentTargets];
+                                                                const volumes = [...(newTargets[idx].dockerVolumes || [])];
+                                                                volumes[volIdx] = { ...volumes[volIdx], container: e.target.value };
+                                                                newTargets[idx].dockerVolumes = volumes;
+                                                                setForm({ ...form, deploymentTargets: newTargets });
+                                                            }}
+                                                            style={{ ...styles.inputFieldStyle, flex: 1, fontSize: 11 }}
+                                                        />
+                                                        <button
+                                                            className="btn btn-secondary"
+                                                            onClick={() => {
+                                                                const newTargets = [...form.deploymentTargets];
+                                                                const volumes = [...(newTargets[idx].dockerVolumes || [])];
+                                                                volumes.splice(volIdx, 1);
+                                                                newTargets[idx].dockerVolumes = volumes;
+                                                                setForm({ ...form, deploymentTargets: newTargets });
+                                                            }}
+                                                            style={{ fontSize: 10, padding: '2px 6px' }}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    className="btn btn-secondary"
+                                                    onClick={() => {
+                                                        const newTargets = [...form.deploymentTargets];
+                                                        newTargets[idx].dockerVolumes = [...(newTargets[idx].dockerVolumes || []), { host: '', container: '' }];
+                                                        setForm({ ...form, deploymentTargets: newTargets });
+                                                    }}
+                                                    style={{ fontSize: 10, padding: '4px 8px', marginTop: 4 }}
+                                                >
+                                                    + Add Volume
+                                                </button>
+                                            </div>
+
+                                            {/* Docker Network */}
+                                            <div style={{ marginTop: 10 }}>
+                                                <div style={{ fontSize: 10, color: '#9fb0c6', marginBottom: 4 }}>Network Mode</div>
+                                                <select
+                                                    className="glass-input"
+                                                    value={target.dockerNetwork || 'bridge'}
+                                                    onChange={(e) => {
+                                                        const newTargets = [...form.deploymentTargets];
+                                                        newTargets[idx].dockerNetwork = e.target.value;
+                                                        setForm({ ...form, deploymentTargets: newTargets });
+                                                    }}
+                                                    style={{ ...styles.inputFieldStyle, fontSize: 11 }}
+                                                >
+                                                    <option value="bridge">bridge (default)</option>
+                                                    <option value="host">host</option>
+                                                    <option value="none">none</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
                                         <div>
                                             <div style={{ fontSize: 11, color: '#9fb0c6', marginBottom: 4 }}>Deploy Path on Agent Server *</div>
                                             <input
@@ -135,7 +322,7 @@ const ProjectModal = ({
                                                 style={styles.inputFieldStyle}
                                             />
                                             <div style={{ fontSize: 10, color: '#7a8fa5', marginTop: 4 }}>
-                                                Files/folders to copy after build completes
+                                                Files/folders to copy after build completes (not needed for Docker deployments)
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

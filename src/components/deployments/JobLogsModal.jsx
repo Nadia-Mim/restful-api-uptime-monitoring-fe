@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
 import Loader from '../common/loader/Loader';
+import Server from '../../../Server';
 
 /**
  * JobLogsModal - Real-time job log streaming via SSE
@@ -27,8 +28,7 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
     useEffect(() => {
         if (!visible || !jobId) return;
 
-        const apiBase = import.meta?.env?.VITE_API_BASE || 'http://localhost:5000';
-        const url = `${apiBase}/jobs/stream?jobId=${encodeURIComponent(jobId)}`;
+        const url = `${Server.baseApi}/jobs/stream?jobId=${encodeURIComponent(jobId)}`;
 
         const eventSource = new EventSource(url);
         eventSourceRef.current = eventSource;

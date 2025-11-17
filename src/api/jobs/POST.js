@@ -1,4 +1,5 @@
-import Server from '../../Server';
+import axios from 'axios';
+import Server from '../../../Server';
 
 /**
  * Dispatch a job to an agent (smart dispatch via project+environment or direct agentId)
@@ -6,7 +7,7 @@ import Server from '../../Server';
  */
 export const dispatchJob = async (payload) => {
     try {
-        const res = await Server.post('/jobs', payload);
+        const res = await axios.post(`${Server.baseApi}/jobs`, payload);
         return [true, res?.data?.data];
     } catch (e) {
         console.error('[dispatchJob] error', e);
@@ -21,7 +22,7 @@ export const dispatchJob = async (payload) => {
  */
 export const reportJobStatus = async (jobId, status) => {
     try {
-        const res = await Server.post('/jobs', { action: 'report', jobId, status, finishedAt: new Date().toISOString() });
+        const res = await axios.post(`${Server.baseApi}/jobs`, { action: 'report', jobId, status, finishedAt: new Date().toISOString() });
         return [true, res?.data?.data];
     } catch (e) {
         console.error('[reportJobStatus] error', e);
@@ -37,7 +38,7 @@ export const reportJobStatus = async (jobId, status) => {
  */
 export const postJobLog = async (jobId, type, message) => {
     try {
-        const res = await Server.post('/jobs', { action: 'log', jobId, type, message });
+        const res = await axios.post(`${Server.baseApi}/jobs`, { action: 'log', jobId, type, message });
         return [true, res?.data?.data];
     } catch (e) {
         console.error('[postJobLog] error', e);
