@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProjectDetails } from '../../api/deploymentProjects/GET';
 import Loader from '../common/loader/Loader';
+import Select from 'react-select';
+import RunIcon from '../../icons/RunIcon.svg';
+import StopIcon from '../../icons/StopIcon.svg';
+import RestartIcon from '../../icons/RestartIcon.svg';
+import JobLogsModal from './JobLogsModal';
+import ConfirmDialog from '../common/modals/ConfirmDialog';
 
 const ProjectDetailsPage = () => {
     const { projectId } = useParams();
@@ -9,12 +15,23 @@ const ProjectDetailsPage = () => {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState(null);
     const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'history' | 'stats'
+    const [selectedEnv, setSelectedEnv] = useState(null);
+    const [actionLoading, setActionLoading] = useState({});
+    const [jobLogsModal, setJobLogsModal] = useState({ visible: false, jobId: null, jobInfo: null });
+    const [confirmDialog, setConfirmDialog] = useState({ visible: false });
 
     useEffect(() => {
         if (projectId) {
             loadDetails();
         }
     }, [projectId]);
+
+    useEffect(() => {
+        // Set first environment as default when data loads
+        if (data?.project?.deploymentTargets?.length > 0 && !selectedEnv) {
+            setSelectedEnv(data.project.deploymentTargets[0].environment);
+        }
+    }, [data]);
 
     const loadDetails = async () => {
         setLoading(true);
@@ -66,6 +83,52 @@ const ProjectDetailsPage = () => {
         );
     };
 
+    const handleAction = async (type) => {
+        if (!selectedEnv) return;
+
+        const loadingKey = `${type}-${selectedEnv}`;
+        setActionLoading({ ...actionLoading, [loadingKey]: true });
+
+        const { dispatchJob } = await import('../../api/jobs/POST');
+        const [ok, result] = await dispatchJob({
+            projectId: data.project._id,
+            environment: selectedEnv,
+            type
+        });
+
+        setActionLoading({ ...actionLoading, [loadingKey]: false });
+
+        if (ok && result?.jobId) {
+            setJobLogsModal({
+                visible: true,
+                jobId: result.jobId,
+                jobInfo: {
+                    projectName: data.project.name,
+                    environment: selectedEnv,
+                    type,
+                    agentName: data.stats?.[selectedEnv]?.agent?.name
+                }
+            });
+        } else {
+            setConfirmDialog({
+                visible: true,
+                title: '❌ Action Failed',
+                message: result || `Failed to ${type}.`,
+                type: 'danger',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+        }
+    };
+
+    const envOptions = data?.project?.deploymentTargets?.map(t => ({
+        value: t.environment,
+        label: t.environment.toUpperCase()
+    })) || [];
+
+    const selectedTarget = data?.project?.deploymentTargets?.find(t => t.environment === selectedEnv);
+    const pipeline = data?.pipelineTemplate;
+
     const styles = {
         container: {
             padding: '20px',
@@ -78,7 +141,8 @@ const ProjectDetailsPage = () => {
             gap: '15px',
             marginBottom: '25px',
             paddingBottom: '15px',
-            borderBottom: '1px solid rgba(130, 141, 153, 0.3)'
+            borderBottom: '1px solid rgba(130, 141, 153, 0.3)',
+            flexWrap: 'wrap'
         },
         backButton: {
             background: 'rgba(69, 69, 230, 0.1)',
@@ -93,7 +157,46 @@ const ProjectDetailsPage = () => {
         title: {
             fontSize: '24px',
             fontWeight: 600,
-            color: '#fff'
+            color: '#fff',
+            flex: 1
+        },
+        actionsContainer: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginLeft: 'auto'
+        },
+        actionButton: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 14px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 500,
+            border: 'none',
+            transition: 'all 0.2s'
+        },
+        deployButton: {
+            background: 'rgba(69, 69, 230, 0.2)',
+            border: '1px solid rgba(69, 69, 230, 0.5)',
+            color: '#6B8AFF'
+        },
+        startButton: {
+            background: 'rgba(76, 175, 80, 0.2)',
+            border: '1px solid rgba(76, 175, 80, 0.5)',
+            color: '#4CAF50'
+        },
+        stopButton: {
+            background: 'rgba(239, 83, 80, 0.2)',
+            border: '1px solid rgba(239, 83, 80, 0.5)',
+            color: '#EF5350'
+        },
+        restartButton: {
+            background: 'rgba(255, 167, 38, 0.2)',
+            border: '1px solid rgba(255, 167, 38, 0.5)',
+            color: '#FFA726'
         },
         tabs: {
             display: 'flex',
@@ -197,7 +300,71 @@ const ProjectDetailsPage = () => {
                         <button style={styles.backButton} onClick={() => navigate('/deployments')}>
                             ← Back
                         </button>
-                        <div style={styles.title}>{data.project?.name}</div>
+                        <div style={styles.title}>
+                            {data.project?.name}
+                            {selectedEnv && data.stats?.[selectedEnv] && (() => {
+                                const status = data.stats[selectedEnv].runtimeStatus || 'unknown';
+                                const isRunning = status === 'running';
+                                const isStopped = status === 'stopped';
+                                return (
+                                    <span
+                                        className={`glass-badge ${isRunning ? 'success' : isStopped ? 'danger' : 'secondary'}`}
+                                        style={{ padding: '4px 10px', borderRadius: 10, fontSize: 12, marginLeft: 12 }}
+                                    >
+                                        {status.toUpperCase()}
+                                    </span>
+                                );
+                            })()}
+                        </div>
+
+                        {envOptions.length > 0 && (
+                            <div style={styles.actionsContainer}>
+                                <button
+                                    style={{ ...styles.actionButton, ...styles.deployButton, opacity: actionLoading[`deploy-${selectedEnv}`] ? 0.5 : 1 }}
+                                    onClick={() => !actionLoading[`deploy-${selectedEnv}`] && handleAction('deploy')}
+                                    disabled={actionLoading[`deploy-${selectedEnv}`]}
+                                >
+                                    <img src={RunIcon} alt="Deploy" style={{ width: 16, height: 16 }} />
+                                    Deploy
+                                </button>
+
+                                {(pipeline?.useDocker || pipeline?.runCommands?.length > 0) && (
+                                    <button
+                                        style={{ ...styles.actionButton, ...styles.startButton, opacity: actionLoading[`start-${selectedEnv}`] ? 0.5 : 1 }}
+                                        onClick={() => !actionLoading[`start-${selectedEnv}`] && handleAction('start')}
+                                        disabled={actionLoading[`start-${selectedEnv}`]}
+                                        title={pipeline?.useDocker ? "Start Docker container" : "Start service"}
+                                    >
+                                        <img src={RunIcon} alt="Start" style={{ width: 16, height: 16 }} />
+                                        Start
+                                    </button>
+                                )}
+
+                                {(pipeline?.useDocker || pipeline?.stopCommands?.length > 0) && (
+                                    <button
+                                        style={{ ...styles.actionButton, ...styles.stopButton, opacity: actionLoading[`stop-${selectedEnv}`] ? 0.5 : 1 }}
+                                        onClick={() => !actionLoading[`stop-${selectedEnv}`] && handleAction('stop')}
+                                        disabled={actionLoading[`stop-${selectedEnv}`]}
+                                        title={pipeline?.useDocker ? "Stop Docker container" : "Stop service"}
+                                    >
+                                        <img src={StopIcon} alt="Stop" style={{ width: 16, height: 16 }} />
+                                        Stop
+                                    </button>
+                                )}
+
+                                {(pipeline?.useDocker || (pipeline?.runCommands?.length > 0 && pipeline?.stopCommands?.length > 0)) && (
+                                    <button
+                                        style={{ ...styles.actionButton, ...styles.restartButton, opacity: actionLoading[`restart-${selectedEnv}`] ? 0.5 : 1 }}
+                                        onClick={() => !actionLoading[`restart-${selectedEnv}`] && handleAction('restart')}
+                                        disabled={actionLoading[`restart-${selectedEnv}`]}
+                                        title={pipeline?.useDocker ? "Restart Docker container" : "Restart service"}
+                                    >
+                                        <img src={RestartIcon} alt="Restart" style={{ width: 16, height: 16 }} />
+                                        Restart
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div style={styles.tabs}>
@@ -258,27 +425,37 @@ const ProjectDetailsPage = () => {
 
                             <div style={styles.section}>
                                 <div style={styles.sectionTitle}>Deployment Targets</div>
-                                {data.project?.deploymentTargets?.map((target, idx) => (
-                                    <div key={idx} style={styles.envCard}>
-                                        <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', color: '#fff' }}>
-                                            {target.environment}
-                                        </div>
-                                        <div style={styles.infoRow}>
-                                            <span style={styles.label}>Deploy Path</span>
-                                            <span style={styles.value}>{target.deployPath}</span>
-                                        </div>
-                                        <div style={styles.infoRow}>
-                                            <span style={styles.label}>Auto Start</span>
-                                            <span style={styles.value}>{target.autoStart ? 'Yes' : 'No'}</span>
-                                        </div>
-                                        {target.artifacts?.length > 0 && (
-                                            <div style={styles.infoRow}>
-                                                <span style={styles.label}>Artifacts</span>
-                                                <span style={styles.value}>{target.artifacts.join(', ')}</span>
+                                {data.project?.deploymentTargets?.map((target, idx) => {
+                                    const runtimeStatus = data.stats?.[target.environment]?.runtimeStatus || 'unknown';
+                                    const statusColor = runtimeStatus === 'running' ? '#4CAF50' : runtimeStatus === 'stopped' ? '#EF5350' : '#9fb0c6';
+                                    return (
+                                        <div key={idx} style={styles.envCard}>
+                                            <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                {target.environment}
+                                                <span
+                                                    className={`glass-badge ${runtimeStatus === 'running' ? 'success' : runtimeStatus === 'stopped' ? 'danger' : 'secondary'}`}
+                                                    style={{ padding: '4px 10px', borderRadius: 10, fontSize: 12 }}
+                                                >
+                                                    {runtimeStatus.toUpperCase()}
+                                                </span>
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
+                                            <div style={styles.infoRow}>
+                                                <span style={styles.label}>Deploy Path</span>
+                                                <span style={styles.value}>{target.deployPath}</span>
+                                            </div>
+                                            <div style={styles.infoRow}>
+                                                <span style={styles.label}>Auto Start</span>
+                                                <span style={styles.value}>{target.autoStart ? 'Yes' : 'No'}</span>
+                                            </div>
+                                            {target.artifacts?.length > 0 && (
+                                                <div style={styles.infoRow}>
+                                                    <span style={styles.label}>Artifacts</span>
+                                                    <span style={styles.value}>{target.artifacts.join(', ')}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -387,6 +564,31 @@ const ProjectDetailsPage = () => {
                 <div style={{ textAlign: 'center', padding: '60px', color: '#9fb0c6', fontSize: '16px' }}>
                     Failed to load project details
                 </div>
+            )}
+
+            {/* Job Logs Modal */}
+            {jobLogsModal.visible && (
+                <JobLogsModal
+                    jobId={jobLogsModal.jobId}
+                    jobInfo={jobLogsModal.jobInfo}
+                    onClose={() => {
+                        setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
+                        loadDetails(); // Refresh data after action
+                    }}
+                />
+            )}
+
+            {/* Confirm Dialog */}
+            {confirmDialog.visible && (
+                <ConfirmDialog
+                    title={confirmDialog.title}
+                    message={confirmDialog.message}
+                    type={confirmDialog.type}
+                    confirmText={confirmDialog.confirmText}
+                    cancelText={confirmDialog.cancelText}
+                    onConfirm={confirmDialog.onConfirm}
+                    onCancel={() => setConfirmDialog({ ...confirmDialog, visible: false })}
+                />
             )}
         </div>
     );

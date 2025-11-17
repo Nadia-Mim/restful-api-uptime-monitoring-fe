@@ -73,8 +73,11 @@ const ProjectsTab = ({
                                             {p.deploymentTargets.map((target, idx) => {
                                                 const agent = agents.find(a => a._id === target.agentId);
                                                 const agentOnline = agentStatus[target.agentId]?.status === 'online';
+                                                const runtimeStatus = p.runtimeStatuses?.[target.environment] || 'unknown';
+                                                const statusColor = runtimeStatus === 'running' ? '#4CAF50' : runtimeStatus === 'stopped' ? '#EF5350' : '#9fb0c6';
                                                 return (
-                                                    <span key={idx} className={`glass-badge ${agentOnline ? 'success' : 'secondary'}`} title={`Agent: ${agent?.name || 'Not assigned'}`}>
+                                                    <span key={idx} className={`glass-badge ${agentOnline ? 'success' : 'secondary'}`} title={`Agent: ${agent?.name || 'Not assigned'} | Status: ${runtimeStatus}`}>
+                                                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, display: 'inline-block', marginRight: 6 }}></span>
                                                         {target.environment.toUpperCase()} {agent?.name ? `(${agent.name})` : ''}
                                                     </span>
                                                 );
