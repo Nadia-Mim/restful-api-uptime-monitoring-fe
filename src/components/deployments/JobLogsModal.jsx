@@ -33,11 +33,15 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
         const eventSource = new EventSource(url);
         eventSourceRef.current = eventSource;
 
+        let hasReceivedData = false;
+
         eventSource.addEventListener('ready', (e) => {
             try {
                 const data = JSON.parse(e.data);
                 if (data.ok) {
+                    hasReceivedData = true;
                     setStatus('RUNNING');
+                    setError(null);
                     setLogs(prev => [...prev, {
                         type: 'info',
                         message: `🔗 Connected to job stream (Job ID: ${jobId})`,
@@ -51,6 +55,7 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
 
         eventSource.addEventListener('log', (e) => {
             try {
+                hasReceivedData = true;
                 const logEntry = JSON.parse(e.data);
                 setLogs(prev => [...prev, logEntry]);
             } catch (err) {
@@ -60,31 +65,33 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
 
         eventSource.addEventListener('complete', (e) => {
             try {
+                hasReceivedData = true;
                 const data = JSON.parse(e.data);
                 setStatus(data.status || 'SUCCESS');
                 setLogs(prev => [...prev, {
-                    type: 'info',
+                    type: 'success',
                     message: `✅ Job completed with status: ${data.status}`,
                     timestamp: new Date().toISOString()
                 }]);
+                // Close connection after completion
+                setTimeout(() => {
+                    if (eventSourceRef.current) {
+                        eventSourceRef.current.close();
+                        eventSourceRef.current = null;
+                    }
+                }, 100);
             } catch (err) {
                 console.error('Error parsing complete event:', err);
             }
         });
 
-        eventSource.addEventListener('error', (e) => {
-            setStatus('DISCONNECTED');
-            setError('Connection lost or error occurred');
-            setLogs(prev => [...prev, {
-                type: 'error',
-                message: '❌ Stream connection error',
-                timestamp: new Date().toISOString()
-            }]);
-        });
-
-        eventSource.onerror = () => {
-            setStatus('DISCONNECTED');
-            setError('Failed to connect to log stream');
+        eventSource.onerror = (e) => {
+            // Only show error if we haven't received any data (real connection failure)
+            // If we've received data, the error is just the stream closing normally
+            if (!hasReceivedData) {
+                setStatus('DISCONNECTED');
+                setError('Failed to connect to log stream');
+            }
         };
 
         return () => {
