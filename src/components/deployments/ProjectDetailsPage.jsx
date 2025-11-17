@@ -19,6 +19,7 @@ const ProjectDetailsPage = () => {
     const [actionLoading, setActionLoading] = useState({});
     const [jobLogsModal, setJobLogsModal] = useState({ visible: false, jobId: null, jobInfo: null });
     const [confirmDialog, setConfirmDialog] = useState({ visible: false });
+    const [agentStatus, setAgentStatus] = useState({});
 
     useEffect(() => {
         if (projectId) {
@@ -32,6 +33,26 @@ const ProjectDetailsPage = () => {
             setSelectedEnv(data.project.deploymentTargets[0].environment);
         }
     }, [data]);
+
+    useEffect(() => {
+        let eventSource;
+        const connectSSE = async () => {
+            try {
+                const { getAgentStatusSSE } = await import('../../api/agents/GET');
+                eventSource = getAgentStatusSSE((statuses) => {
+                    setAgentStatus(statuses);
+                });
+            } catch (error) {
+                console.error('Failed to connect to agent status SSE:', error);
+            }
+        };
+        connectSSE();
+        return () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+        };
+    }, []);
 
     const loadDetails = async () => {
         setLoading(true);
@@ -87,8 +108,65 @@ const ProjectDetailsPage = () => {
         if (!selectedEnv) return;
 
         const loadingKey = `${type}-${selectedEnv}`;
-        setActionLoading({ ...actionLoading, [loadingKey]: true });
+        
+        // Get agent for selected environment
+        const target = data.project?.deploymentTargets?.find(t => t.environment === selectedEnv);
+        const agent = data.stats?.[selectedEnv]?.agent;
 
+        console.log('handleAction:', { type, selectedEnv, target, agent, agentStatus });
+
+        // Check if agent exists
+        if (!agent) {
+            setConfirmDialog({
+                visible: true,
+                title: '⚠️ Agent Not Found',
+                message: 'The assigned agent was not found. Please check agent configuration.',
+                type: 'warning',
+                confirmText: 'OK',
+                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        // Check if agent is online (only if we have agent status data)
+        if (target?.agentId && agentStatus[target.agentId]) {
+            const isOnline = agentStatus[target.agentId]?.status === 'online';
+            if (!isOnline) {
+                setConfirmDialog({
+                    visible: true,
+                    title: '⚠️ Agent Offline',
+                    message: `Agent "${agent?.name || 'Unknown'}" is currently offline. ${type.charAt(0).toUpperCase() + type.slice(1)} cannot proceed. Please ensure the agent is running.`,
+                    type: 'warning',
+                    confirmText: 'OK',
+                    onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                });
+                return;
+            }
+        }
+
+        // For deploy action, check production and show warning
+        if (type === 'deploy' && selectedEnv === 'production') {
+            setConfirmDialog({
+                visible: true,
+                title: '🚀 Deploy to Production',
+                message: `Are you sure you want to deploy "${data.project.name}" to PRODUCTION?\n\nThis will update the live production environment.`,
+                type: 'warning',
+                confirmText: 'Deploy',
+                onConfirm: async () => {
+                    setConfirmDialog({ ...confirmDialog, visible: false });
+                    await executeAction(type, loadingKey, agent);
+                },
+                onCancel: () => setConfirmDialog({ ...confirmDialog, visible: false })
+            });
+            return;
+        }
+
+        await executeAction(type, loadingKey, agent);
+    };
+
+    const executeAction = async (type, loadingKey, agent) => {
+        console.log('executeAction called:', { type, loadingKey, agent });
+        
         const { dispatchJob } = await import('../../api/jobs/POST');
         const [ok, result] = await dispatchJob({
             projectId: data.project._id,
@@ -96,19 +174,21 @@ const ProjectDetailsPage = () => {
             type
         });
 
-        setActionLoading({ ...actionLoading, [loadingKey]: false });
+        console.log('dispatchJob result:', { ok, result });
 
         if (ok && result?.jobId) {
-            setJobLogsModal({
+            const modalData = {
                 visible: true,
                 jobId: result.jobId,
                 jobInfo: {
                     projectName: data.project.name,
                     environment: selectedEnv,
                     type,
-                    agentName: data.stats?.[selectedEnv]?.agent?.name
+                    agentName: agent?.name
                 }
-            });
+            };
+            console.log('Setting jobLogsModal:', modalData);
+            setJobLogsModal(modalData);
         } else {
             setConfirmDialog({
                 visible: true,
@@ -316,72 +396,60 @@ const ProjectDetailsPage = () => {
                         {envOptions.length > 0 && (
                             <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
                                 <button
-                                    style={styles.actionButton('#4545E6', actionLoading[`deploy-${selectedEnv}`])}
-                                    onClick={() => !actionLoading[`deploy-${selectedEnv}`] && handleAction('deploy')}
-                                    disabled={actionLoading[`deploy-${selectedEnv}`]}
+                                    style={styles.actionButton('#4545E6', false)}
+                                    onClick={() => handleAction('deploy')}
                                     onMouseEnter={(e) => {
-                                        if (!actionLoading[`deploy-${selectedEnv}`]) {
-                                            e.target.style.background = '#4545E6';
-                                        }
+                                        e.target.style.background = '#4545E6';
                                     }}
                                     onMouseLeave={(e) => {
                                         e.target.style.background = 'transparent';
                                     }}
                                 >
-                                    {actionLoading[`deploy-${selectedEnv}`] ? 'Deploying...' : 'Deploy'}
+                                    Deploy
                                 </button>
 
                                 {(pipeline?.useDocker || pipeline?.runCommands?.length > 0) && (
                                     <button
-                                        style={styles.actionButton('#4CAF50', actionLoading[`start-${selectedEnv}`])}
-                                        onClick={() => !actionLoading[`start-${selectedEnv}`] && handleAction('start')}
-                                        disabled={actionLoading[`start-${selectedEnv}`]}
+                                        style={styles.actionButton('#4CAF50', false)}
+                                        onClick={() => handleAction('start')}
                                         onMouseEnter={(e) => {
-                                            if (!actionLoading[`start-${selectedEnv}`]) {
-                                                e.target.style.background = '#4CAF50';
-                                            }
+                                            e.target.style.background = '#4CAF50';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.target.style.background = 'transparent';
                                         }}
                                     >
-                                        {actionLoading[`start-${selectedEnv}`] ? 'Starting...' : 'Start'}
+                                        Start
                                     </button>
                                 )}
 
                                 {(pipeline?.useDocker || pipeline?.stopCommands?.length > 0) && (
                                     <button
-                                        style={styles.actionButton('#EF5350', actionLoading[`stop-${selectedEnv}`])}
-                                        onClick={() => !actionLoading[`stop-${selectedEnv}`] && handleAction('stop')}
-                                        disabled={actionLoading[`stop-${selectedEnv}`]}
+                                        style={styles.actionButton('#EF5350', false)}
+                                        onClick={() => handleAction('stop')}
                                         onMouseEnter={(e) => {
-                                            if (!actionLoading[`stop-${selectedEnv}`]) {
-                                                e.target.style.background = '#EF5350';
-                                            }
+                                            e.target.style.background = '#EF5350';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.target.style.background = 'transparent';
                                         }}
                                     >
-                                        {actionLoading[`stop-${selectedEnv}`] ? 'Stopping...' : 'Stop'}
+                                        Stop
                                     </button>
                                 )}
 
                                 {(pipeline?.useDocker || (pipeline?.runCommands?.length > 0 && pipeline?.stopCommands?.length > 0)) && (
                                     <button
-                                        style={styles.actionButton('#FFA726', actionLoading[`restart-${selectedEnv}`])}
-                                        onClick={() => !actionLoading[`restart-${selectedEnv}`] && handleAction('restart')}
-                                        disabled={actionLoading[`restart-${selectedEnv}`]}
+                                        style={styles.actionButton('#FFA726', false)}
+                                        onClick={() => handleAction('restart')}
                                         onMouseEnter={(e) => {
-                                            if (!actionLoading[`restart-${selectedEnv}`]) {
-                                                e.target.style.background = '#FFA726';
-                                            }
+                                            e.target.style.background = '#FFA726';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.target.style.background = 'transparent';
                                         }}
                                     >
-                                        {actionLoading[`restart-${selectedEnv}`] ? 'Restarting...' : 'Restart'}
+                                        Restart
                                     </button>
                                 )}
                             </div>
@@ -596,16 +664,19 @@ const ProjectDetailsPage = () => {
             )}
 
             {/* Job Logs Modal */}
-            {jobLogsModal.visible && (
-                <JobLogsModal
-                    jobId={jobLogsModal.jobId}
-                    jobInfo={jobLogsModal.jobInfo}
-                    onClose={() => {
-                        setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
-                        loadDetails(); // Refresh data after action
-                    }}
-                />
-            )}
+            <JobLogsModal
+                visible={jobLogsModal.visible}
+                jobId={jobLogsModal.jobId}
+                jobInfo={jobLogsModal.jobInfo}
+                onClose={() => {
+                    console.log('JobLogsModal closing');
+                    setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
+                    loadDetails(); // Refresh data after action
+                }}
+            />
+
+            {/* Debug: Show modal state */}
+            {console.log('Current jobLogsModal state:', jobLogsModal)}
 
             {/* Confirm Dialog */}
             {confirmDialog.visible && (
