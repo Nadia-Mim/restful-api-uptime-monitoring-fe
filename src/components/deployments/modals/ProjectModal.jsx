@@ -352,9 +352,17 @@ const ProjectModal = ({
                         )}
                     </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14, paddingBottom: 20 }}>
-                    <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                    <div style={styles.blueButton} onClick={onSubmit}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '25px 0' }}>
+                    <div
+                        style={{ ...styles.redButton, marginRight: '15px' }}
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </div>
+                    <div
+                        style={{ ...styles.blueButton, width: isEditMode ? '70px' : '60px' }}
+                        onClick={onSubmit}
+                    >
                         {isEditMode ? 'Update' : 'Create'}
                     </div>
                 </div>

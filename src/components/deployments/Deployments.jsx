@@ -30,21 +30,30 @@ const envOptions = [
 const styles = {
     inputFieldStyle: {
         width: '97%',
-        border: '1px solid rgba(130, 141, 153, 0.5)',
-        borderRadius: '5px',
+        border: "1px solid rgba(130, 141, 153, 0.5)",
+        borderRadius: "5px",
         background: '#1E1F26',
-        padding: '8px',
+        padding: "8px",
         fontSize: '17px',
         fontWeight: 300,
-        color: '#fff',
+        color: '#fff'
     },
     blueButton: {
         background: '#4545E6',
-        height: '22px',
-        width: '120px',
-        padding: '9px 14px',
+        padding: '10px',
         cursor: 'pointer',
         borderRadius: '5px'
+    },
+    redButton: {
+        background: '#F52D2D',
+        width: '55px',
+        padding: '10px',
+        cursor: 'pointer',
+        borderRadius: '5px'
+    },
+    smallText: {
+        fontSize: '12px',
+        fontWeight: 300,
     },
     selectStyle: {
         control: (styles) => ({

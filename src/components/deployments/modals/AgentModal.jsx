@@ -24,7 +24,7 @@ const AgentModal = ({
             <CustomModalHeader onClose={onClose}>
                 {isEditMode ? 'Edit Agent' : 'Register New Agent'}
             </CustomModalHeader>
-            <CustomModalBody style={{ padding: '20px' }}>
+            <CustomModalBody style={{ padding: '15px 5%', maxHeight: '82vh', overflowY: 'auto' }}>
                 <div style={{ display: 'grid', gap: 12 }}>
                     <div>
                         <div style={{ fontSize: 12, color: '#9fb0c6', marginBottom: 6 }}>Agent Name *</div>
@@ -62,9 +62,17 @@ const AgentModal = ({
                         After registration, you'll receive a token and installation instructions to set up the agent on your server.
                     </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-                    <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                    <div style={styles.blueButton} onClick={onSubmit}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '25px 0' }}>
+                    <div
+                        style={{ ...styles.redButton, marginRight: '15px' }}
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </div>
+                    <div
+                        style={{ ...styles.blueButton, width: isEditMode ? '70px' : '75px' }}
+                        onClick={onSubmit}
+                    >
                         {isEditMode ? 'Update' : 'Register'}
                     </div>
                 </div>

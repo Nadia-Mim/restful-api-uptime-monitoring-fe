@@ -101,13 +101,13 @@ const ResetUserPasswordModal = (props) => {
         <div>
             <CustomModal visible={props?.resetPassModalVisualize} style={{ maxWidth: '600px' }}>
                 <CustomModalHeader onClose={() => props.setResetPassModalVisualize(false)}>Reset Password</CustomModalHeader>
-                <CustomModalBody style={{ padding: '15px 5%' }}>
+                <CustomModalBody style={{ padding: '15px 5%', maxHeight: '82vh', overflowY: 'auto' }}>
                     <div style={{ marginBottom: '15px' }}>
                         <div style={styles.smallText} className="required">Current Password</div>
                         <div>
                             <input
                                 placeholder='Current Password'
-                                type="text"
+                                type="password"
                                 style={styles.inputFieldStyle}
                                 value={values?.currentPassword || ""}
                                 onChange={(e) => setValues({ ...values, currentPassword: e.target.value })}
@@ -123,7 +123,7 @@ const ResetUserPasswordModal = (props) => {
                         <div>
                             <input
                                 placeholder='New Password'
-                                type="text"
+                                type="password"
                                 style={styles.inputFieldStyle}
                                 value={values?.password || ""}
                                 onChange={(e) => setValues({ ...values, password: e.target.value })}
@@ -139,7 +139,7 @@ const ResetUserPasswordModal = (props) => {
                         <div>
                             <input
                                 placeholder='Confirm New Password'
-                                type="text"
+                                type="password"
                                 style={styles.inputFieldStyle}
                                 value={values?.reWrittenPassword || ""}
                                 onChange={(e) => setValues({ ...values, reWrittenPassword: e.target.value })}

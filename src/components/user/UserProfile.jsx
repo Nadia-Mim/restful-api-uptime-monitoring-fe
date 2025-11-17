@@ -1,45 +1,61 @@
 import { useFormik } from "formik";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as Yup from "yup";
 import { getUserInfoByUserId } from '../../api/user/GET';
-import UserCardBackground from '../../images/UserCardBackground.jpg';
 import Loader from '../common/loader/Loader';
 import ResetUserPasswordModal from './ResetUserPasswordModal';
 import { updateUserDetails } from "../../api/user/PUT";
-import ErrorTooltip from "../common/ErrorTooltip/ErrorTooltip";
 import SuccessModal from "../common/modals/successModal/SuccessModal";
 import ErrorModal from "../common/modals/errorModal/ErrorModal";
-import AddIcon from "../../icons/AddIcon.svg";
-import MinusIcon from "../../icons/MinusIcon.svg";
+import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
 
 const styles = {
-    card: {
-        backgroundImage: `url(${UserCardBackground})`,
-        backgroundPosition: 'left',
-        width: '100%',
-        height: '170px',
-        // background: '#1E1F26',
-        boxShadow: '0px 4px 1rem #000',
-        display: 'flex',
-        alignItems: 'center'
+    section: {
+        marginBottom: '20px',
+        background: 'rgba(30, 31, 38, 0.5)',
+        padding: '20px',
+        borderRadius: '8px',
+        border: '1px solid rgba(130, 141, 153, 0.2)'
     },
-    largeText: {
-        fontSize: '18px',
-        fontWeight: 400,
+    sectionTitle: {
+        fontSize: '14px',
+        fontWeight: 600,
+        color: '#fff',
+        marginBottom: '15px',
+        borderBottom: '1px solid rgba(130, 141, 153, 0.2)',
+        paddingBottom: '8px'
+    },
+    infoRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        padding: '8px 0',
+        borderBottom: '1px solid rgba(130, 141, 153, 0.1)'
+    },
+    label: {
+        color: '#9fb0c6',
+        fontSize: '13px'
+    },
+    value: {
+        color: '#fff',
+        fontSize: '13px',
+        fontWeight: 500
     },
     smallText: {
         fontSize: '12px',
         fontWeight: 300,
     },
-    userInfoTitle: {
-        width: '150px',
-    },
-    userInfo: {
-        fontWeight: 600,
+    inputFieldStyle: {
+        width: '97%',
+        border: "1px solid rgba(130, 141, 153, 0.5)",
+        borderRadius: "5px",
+        background: '#1E1F26',
+        padding: "8px",
+        fontSize: '17px',
+        fontWeight: 300,
+        color: '#fff'
     },
     blueButton: {
         background: '#4545E6',
-        width: '130px',
         padding: '10px',
         cursor: 'pointer',
         borderRadius: '5px'
@@ -50,28 +66,6 @@ const styles = {
         padding: '10px',
         cursor: 'pointer',
         borderRadius: '5px'
-    },
-    editIconStyle: {
-        height: '20px',
-        width: "20px",
-        borderRadius: "50%",
-        border: '2px solid white',
-        background: "black",
-        padding: "5px",
-        cursor: 'pointer',
-        position: 'absolute',
-        left: 270,
-        top: 250
-    },
-    inputFieldStyle: {
-        width: '97%',
-        border: "1px solid rgba(255, 255, 255, 0.14)",
-        borderRadius: "10px",
-        background: 'rgba(255,255,255,0.03)',
-        padding: "8px",
-        fontSize: '17px',
-        fontWeight: 300,
-        color: '#fff'
     },
     customError: {
         float: "right",
@@ -86,10 +80,12 @@ const styles = {
 const authData = localStorage.authData ? JSON.parse(localStorage.authData) : {};
 
 const UserProfile = () => {
-
     const [userInfo, setUserInfo] = useState({});
     const [reload, setReload] = useState(false);
     const [isEditable, setIsEditable] = useState(false);
+    const [profileImage, setProfileImage] = useState(null);
+    const [profileImagePreview, setProfileImagePreview] = useState(null);
+    const fileInputRef = useRef(null);
 
     const [resetPassModalVisualize, setResetPassModalVisualize] = useState(false);
     const [showLoader, setShowLoader] = useState(false);
@@ -120,18 +116,49 @@ const UserProfile = () => {
             email: Yup.string().email('Invalid email').required('Email is required'),
             phone: Yup.string().required('Phone is required'),
         }),
-        onSubmit: (value) => {
-            updateUserDetails(values).then(response => {
+        onSubmit: async (value) => {
+            const formData = { ...values };
+            
+            // If there's a new profile image, convert to base64
+            if (profileImage) {
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    formData.profilePicture = reader.result;
+                    const response = await updateUserDetails(formData);
+                    if (response?.[0]) {
+                        setMessage('Profile updated successfully.');
+                        setSuccessModalVisible(true);
+                    } else {
+                        setMessage(response?.[1]);
+                        setErrorModalVisible(true);
+                    }
+                };
+                reader.readAsDataURL(profileImage);
+            } else {
+                const response = await updateUserDetails(formData);
                 if (response?.[0]) {
-                    setMessage('User information updated successfully.')
+                    setMessage('Profile updated successfully.');
                     setSuccessModalVisible(true);
                 } else {
                     setMessage(response?.[1]);
                     setErrorModalVisible(true);
                 }
-            })
+            }
         },
     });
+
+    const handleProfileImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                setMessage('Image size should be less than 5MB');
+                setErrorModalVisible(true);
+                return;
+            }
+            setProfileImage(file);
+            setProfileImagePreview(URL.createObjectURL(file));
+        }
+    };
 
     const addAdditionalEmail = () => {
         setValues({
@@ -162,6 +189,8 @@ const UserProfile = () => {
         setReload(!reload);
         setIsEditable(false);
         setValues({});
+        setProfileImage(null);
+        setProfileImagePreview(null);
         setSuccessModalVisible(false);
     }
 
@@ -169,248 +198,315 @@ const UserProfile = () => {
         setErrorModalVisible(false);
     }
 
-    console.log(values)
-
     return (
         <div>
+            {showLoader && <Loader />}
 
-            {showLoader &&
-                <Loader />
-            }
-
-            {resetPassModalVisualize &&
+            {resetPassModalVisualize && (
                 <ResetUserPasswordModal
                     resetPassModalVisualize={resetPassModalVisualize}
                     setResetPassModalVisualize={setResetPassModalVisualize}
                 />
-            }
+            )}
 
-            {successModalVisible &&
+            {successModalVisible && (
                 <SuccessModal
                     modalVisible={successModalVisible}
                     actionOnSuccessModal={actionOnSuccessModal}
                     message={message}
                 />
-            }
+            )}
 
-            {errorModalVisible &&
+            {errorModalVisible && (
                 <ErrorModal
                     modalVisible={errorModalVisible}
                     actionOnErrorModal={actionOnErrorModal}
                     message={message}
                 />
-            }
+            )}
 
-
-            <div style={{ marginBottom: '25px' }}>
-                <div style={styles.card} className="glass-panel">
-                    <span style={{ fontSize: '35px', fontWeight: 600, marginLeft: '25px' }}>
-                        {`${userInfo?.firstName} ${userInfo?.lastName}`}
-                    </span>
-                </div>
-            </div>
-
-            <div style={{ marginBottom: '25px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 600, fontSize: '20px' }}>User Details</div>
-
-                    <div>
-                        <div
-                            style={{ ...styles.blueButton, width: '90px' }}
-                            className="glass-button-primary"
-                            onClick={() => {
-                                setValues({ ...userInfo });
-                                setIsEditable(true);
-                            }}
-                        >
-                            Edit Details
-                        </div>
+            {/* Header */}
+            <div className="glass-toolbar" style={{ marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        background: userInfo?.profilePicture ? `url(${userInfo.profilePicture})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 18,
+                        fontWeight: 600,
+                        color: '#fff'
+                    }}>
+                        {!userInfo?.profilePicture && `${userInfo?.firstName?.charAt(0) || ''}${userInfo?.lastName?.charAt(0) || ''}`}
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 18 }}>
+                        {`${userInfo?.firstName || ''} ${userInfo?.lastName || ''}`}
                     </div>
                 </div>
-                <hr />
+                <span className="glass-badge secondary" style={{ padding: '4px 10px', borderRadius: 10, fontSize: 12 }}>
+                    USER PROFILE
+                </span>
+                <button
+                    className="glass-button-primary"
+                    style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 5 }}
+                    onClick={() => {
+                        setValues({ ...userInfo });
+                        setProfileImagePreview(userInfo?.profilePicture || null);
+                        setIsEditable(true);
+                    }}
+                >
+                    Edit Profile
+                </button>
             </div>
-
 
             {/* User Details */}
-            {isEditable ?
-                <div className="user-info-edit glass-card" style={{ padding: '16px' }}>
-                    <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText} className="required">First Name</div>
-                        <div>
-                            <input
-                                className="glass-input"
-                                placeholder='Type First Name'
-                                type="text"
-                                style={styles.inputFieldStyle}
-                                value={values?.firstName}
-                                onChange={(e) => setValues({ ...values, firstName: e.target.value })}
-                            />
-                            {touched?.firstName && errors?.firstName && (
-                                <span style={styles.customError}><ErrorTooltip content={errors?.firstName} origin={`firstName`} /></span>
-                            )}
+            <>
+                <div style={styles.section}>
+                    <div style={styles.sectionTitle}>Account Information</div>
+                    <div style={styles.infoRow}>
+                        <span style={styles.label}>User ID</span>
+                        <span style={styles.value}>{userInfo?.userId || 'N/A'}</span>
+                    </div>
+                    <div style={styles.infoRow}>
+                        <span style={styles.label}>Full Name</span>
+                        <span style={styles.value}>{`${userInfo?.firstName || ''} ${userInfo?.lastName || ''}`}</span>
+                    </div>
+                    <div style={styles.infoRow}>
+                        <span style={styles.label}>Email</span>
+                        <span style={styles.value}>{userInfo?.email || 'N/A'}</span>
+                    </div>
+                    {userInfo?.additionalEmails?.length > 0 && (
+                        <div style={styles.infoRow}>
+                            <span style={styles.label}>Additional Emails</span>
+                            <span style={styles.value}>{userInfo?.additionalEmails?.join(', ')}</span>
                         </div>
+                    )}
+                    <div style={styles.infoRow}>
+                        <span style={styles.label}>Phone Number</span>
+                        <span style={styles.value}>{userInfo?.phone || 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div style={styles.section}>
+                    <div style={styles.sectionTitle}>Security</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: '#fff', marginBottom: 4 }}>Password</div>
+                            <div style={{ fontSize: 12, color: '#9fb0c6' }}>Change your password to keep your account secure</div>
+                        </div>
+                        <button
+                            className="glass-button-primary"
+                            style={{ padding: '8px 16px', borderRadius: 5 }}
+                            onClick={() => setResetPassModalVisualize(true)}
+                        >
+                            Change Password
+                        </button>
+                    </div>
+                </div>
+            </>
+
+            {/* Edit Profile Modal */}
+            <CustomModal visible={isEditable} style={{ maxWidth: '600px' }}>
+                <CustomModalHeader onClose={() => {
+                    setIsEditable(false);
+                    setValues({});
+                    setProfileImage(null);
+                    setProfileImagePreview(null);
+                    resetForm();
+                }}>
+                    Edit Profile
+                </CustomModalHeader>
+                <CustomModalBody style={{ padding: '15px 5%', maxHeight: '82vh', overflowY: 'auto' }}>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        accept="image/*"
+                        onChange={handleProfileImageChange}
+                    />
+
+                    {/* Profile Picture Upload */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20 }}>
+                        <div style={{
+                            width: 100,
+                            height: 100,
+                            borderRadius: '50%',
+                            background: profileImagePreview ? `url(${profileImagePreview})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 32,
+                            fontWeight: 600,
+                            color: '#fff',
+                            marginBottom: 12,
+                            border: '3px solid rgba(130, 141, 153, 0.3)',
+                            cursor: 'pointer'
+                        }}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {!profileImagePreview && `${values?.firstName?.charAt(0) || ''}${values?.lastName?.charAt(0) || ''}`}
+                        </div>
+                        <button
+                            type="button"
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid #4545E6',
+                                color: '#4545E6',
+                                padding: '6px 12px',
+                                borderRadius: 5,
+                                fontSize: 12,
+                                cursor: 'pointer'
+                            }}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {profileImagePreview ? 'Change Photo' : 'Upload Photo'}
+                        </button>
+                        <div style={{ fontSize: 11, color: '#9fb0c6', marginTop: 6 }}>Max size: 5MB</div>
                     </div>
 
-                    <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText} className="required">Last Name</div>
-                        <div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                        <div style={{ marginBottom: '15px' }}>
+                            <div style={styles.smallText} className="required">First Name</div>
                             <input
-                                className="glass-input"
-                                placeholder='Type Last Name'
+                                placeholder='Enter first name'
                                 type="text"
                                 style={styles.inputFieldStyle}
-                                value={values?.lastName}
+                                value={values?.firstName || ''}
+                                onChange={(e) => setValues({ ...values, firstName: e.target.value })}
+                                onBlur={handleBlur}
+                                name="firstName"
+                            />
+                            {touched?.firstName && errors?.firstName && (
+                                <div style={styles.customError}>{errors?.firstName}</div>
+                            )}
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <div style={styles.smallText} className="required">Last Name</div>
+                            <input
+                                placeholder='Enter last name'
+                                type="text"
+                                style={styles.inputFieldStyle}
+                                value={values?.lastName || ''}
                                 onChange={(e) => setValues({ ...values, lastName: e.target.value })}
+                                onBlur={handleBlur}
+                                name="lastName"
                             />
                             {touched?.lastName && errors?.lastName && (
-                                <span style={styles.customError}><ErrorTooltip content={errors?.lastName} origin={`lastName`} /></span>
+                                <div style={styles.customError}>{errors?.lastName}</div>
                             )}
                         </div>
                     </div>
 
                     <div style={{ marginBottom: '15px' }}>
                         <div style={styles.smallText} className="required">Email</div>
-                        <div>
-                            <input
-                                className="glass-input"
-                                placeholder='Type Email'
-                                type="text"
-                                style={styles.inputFieldStyle}
-                                value={values?.email}
-                                onChange={(e) => setValues({ ...values, email: e.target.value })}
-                            />
-                            {touched?.email && errors?.email && (
-                                <span style={styles.customError}><ErrorTooltip content={errors?.email} origin={`email`} /></span>
-                            )}
-                        </div>
+                        <input
+                            placeholder='Enter email address'
+                            type="email"
+                            style={styles.inputFieldStyle}
+                            value={values?.email || ''}
+                            onChange={(e) => setValues({ ...values, email: e.target.value })}
+                            onBlur={handleBlur}
+                            name="email"
+                        />
+                        {touched?.email && errors?.email && (
+                            <div style={styles.customError}>{errors?.email}</div>
+                        )}
                     </div>
 
-                    {values?.additionalEmails?.length > 0 &&
-                        values?.additionalEmails?.map((additionalEmail, index) => {
-                            return (
-                                <div style={{ marginBottom: '15px' }}>
-                                    <div style={styles.smallText}>Additional Email {index + 1}</div>
-                                    <div>
-                                        <input
-                                            className="glass-input"
-                                            placeholder='Type Additional Email'
-                                            type="text"
-                                            style={styles.inputFieldStyle}
-                                            value={additionalEmail}
-                                            onChange={(e) => updateAdditionalEmail(e.target.value, index)}
-                                        />
-                                    </div>
-                                    <div
-                                        style={{ marginBottom: '15px', color: 'blue', display: 'flex', gap: '10px', alignItems: 'center', cursor: 'pointer' }}
-                                        onClick={() => deleteAdditionalEmail(index)}
-                                    >
-                                        <img src={MinusIcon} />
-                                        Remove Email
-                                    </div>
-                                </div>
-                            )
-                        })
-                    }
+                    {values?.additionalEmails?.map((additionalEmail, index) => (
+                        <div key={index} style={{ marginBottom: '15px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                <div style={styles.smallText}>Additional Email {index + 1}</div>
+                                <button
+                                    type="button"
+                                    style={{
+                                        background: 'transparent',
+                                        border: '1px solid #EF5350',
+                                        color: '#EF5350',
+                                        padding: '4px 8px',
+                                        borderRadius: 4,
+                                        fontSize: 11,
+                                        cursor: 'pointer'
+                                    }}
+                                    onClick={() => deleteAdditionalEmail(index)}
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                            <input
+                                placeholder='Enter additional email'
+                                type="email"
+                                style={styles.inputFieldStyle}
+                                value={additionalEmail}
+                                onChange={(e) => updateAdditionalEmail(e.target.value, index)}
+                            />
+                        </div>
+                    ))}
 
-
-                    <div
-                        style={{ marginBottom: '15px', color: 'blue', display: 'flex', gap: '10px', alignItems: 'center', cursor: 'pointer' }}
+                    <button
+                        type="button"
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid #4545E6',
+                            color: '#4545E6',
+                            padding: '8px 16px',
+                            borderRadius: 5,
+                            fontSize: 13,
+                            cursor: 'pointer',
+                            marginBottom: 20,
+                            width: '100%'
+                        }}
                         onClick={() => addAdditionalEmail()}
                     >
-                        <img src={AddIcon} />
-                        Add Additional Email
-                    </div>
+                        + Add Additional Email
+                    </button>
 
                     <div style={{ marginBottom: '15px' }}>
-                        <div style={styles.smallText} className="required">Phone No.</div>
-                        <div>
-                            <input
-                                className="glass-input"
-                                placeholder='Type Phone'
-                                type="text"
-                                style={styles.inputFieldStyle}
-                                value={values?.phone ? values?.phone : '880'}
-                                onChange={(e) => setValues({ ...values, phone: e.target.value })}
-                            />
-                            {touched?.phone && errors?.phone && (
-                                <span style={styles.customError}><ErrorTooltip content={errors?.phone} origin={`phone`} /></span>
-                            )}
-                        </div>
+                        <div style={styles.smallText} className="required">Phone Number</div>
+                        <input
+                            placeholder='Enter phone number'
+                            type="text"
+                            style={styles.inputFieldStyle}
+                            value={values?.phone || '880'}
+                            onChange={(e) => setValues({ ...values, phone: e.target.value })}
+                            onBlur={handleBlur}
+                            name="phone"
+                        />
+                        {touched?.phone && errors?.phone && (
+                            <div style={styles.customError}>{errors?.phone}</div>
+                        )}
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '25px 0' }}>
                         <div
                             style={{ ...styles.redButton, marginRight: '15px' }}
-                            className="glass-button-danger"
-                            onClick={() => setIsEditable(false)}
+                            onClick={() => {
+                                setIsEditable(false);
+                                setValues({});
+                                setProfileImage(null);
+                                setProfileImagePreview(null);
+                                resetForm();
+                            }}
                         >
                             Cancel
                         </div>
-
                         <div
-                            style={{ ...styles.blueButton, width: '105px' }}
-                            className="glass-button-primary"
+                            style={{ ...styles.blueButton, width: '120px' }}
                             onClick={handleSubmit}
                         >
-                            Update User
+                            Save Changes
                         </div>
                     </div>
-                </div>
-                :
-                <div>
-                    <div style={{ display: 'flex', marginBottom: '25px' }}>
-                        <div style={styles?.userInfoTitle}>User Id</div>
-                        <div className='user-info-show'>
-                            {userInfo?.userId ? `: ${userInfo?.userId}` : ': N/A'}
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', marginBottom: '25px' }}>
-                        <div style={styles?.userInfoTitle}>User Name</div>
-                        <div className='user-info-show'>
-                            {`: ${userInfo?.firstName} ${userInfo?.lastName}`}
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', marginBottom: '25px' }}>
-                        <div style={styles?.userInfoTitle}>Email</div>
-                        <div className='user-info-show'>
-                            {userInfo?.email ? `: ${userInfo?.email}` : 'N/A'}
-                        </div>
-                    </div>
-
-                    {userInfo?.additionalEmails?.length > 0 &&
-                        <div style={{ display: 'flex', marginBottom: '25px' }}>
-                            <div style={styles?.userInfoTitle}>Additional Emails</div>
-                            <div className='user-info-show'>
-                                {userInfo?.additionalEmails?.length && `: ${userInfo?.additionalEmails?.join(', ')}`}
-                            </div>
-                        </div>
-                    }
-
-                    <div style={{ display: 'flex', marginBottom: '25px' }}>
-                        <div style={styles?.userInfoTitle}>Phone No.</div>
-                        <div className='user-info-show'>
-                            {userInfo?.phone ? `: ${userInfo?.phone}` : 'N/A'}
-                        </div>
-                    </div>
-
-                    <div>
-                        <div
-                            style={styles.blueButton}
-                            className="glass-button-primary"
-                            onClick={() => setResetPassModalVisualize(true)}
-                        >
-                            Reset Password
-                        </div>
-                    </div>
-                </div>
-            }
-
-
-
-
+                </CustomModalBody>
+            </CustomModal>
         </div>
     )
 }

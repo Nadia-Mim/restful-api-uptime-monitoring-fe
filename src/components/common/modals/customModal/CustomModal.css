@@ -73,6 +73,7 @@
     font-weight: 500;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     color: #DCE4F0;
+    background: transparent;
 }
 
 .response-modal-body {
@@ -80,6 +81,7 @@
     max-height: calc(90vh - 56px);
     /* header height approx 56px */
     overflow-y: auto;
+    background: transparent;
 }
 
 .response-modal-footer {
