@@ -226,7 +226,8 @@ const ProjectsTab = ({
                                                             {target.environment.toUpperCase()}
                                                         </div>
                                                         <div style={{ display: 'flex', gap: 6 }}>
-                                                            {pipeline?.runCommands?.length > 0 && (
+                                                            {/* Show controls for Docker OR traditional deployments */}
+                                                            {(pipeline?.useDocker || pipeline?.runCommands?.length > 0) && (
                                                                 <img
                                                                     src={RunIcon}
                                                                     alt="Start"
@@ -237,10 +238,10 @@ const ProjectsTab = ({
                                                                         opacity: actionLoading[startKey] ? 0.4 : 0.9
                                                                     }}
                                                                     onClick={() => !actionLoading[startKey] && handleServiceAction('start', startKey)}
-                                                                    title="Start service"
+                                                                    title={pipeline?.useDocker ? "Start Docker container" : "Start service"}
                                                                 />
                                                             )}
-                                                            {pipeline?.stopCommands?.length > 0 && (
+                                                            {(pipeline?.useDocker || pipeline?.stopCommands?.length > 0) && (
                                                                 <img
                                                                     src={StopIcon}
                                                                     alt="Stop"
@@ -251,10 +252,10 @@ const ProjectsTab = ({
                                                                         opacity: actionLoading[stopKey] ? 0.4 : 0.9
                                                                     }}
                                                                     onClick={() => !actionLoading[stopKey] && handleServiceAction('stop', stopKey)}
-                                                                    title="Stop service"
+                                                                    title={pipeline?.useDocker ? "Stop Docker container" : "Stop service"}
                                                                 />
                                                             )}
-                                                            {pipeline?.runCommands?.length > 0 && pipeline?.stopCommands?.length > 0 && (
+                                                            {(pipeline?.useDocker || (pipeline?.runCommands?.length > 0 && pipeline?.stopCommands?.length > 0)) && (
                                                                 <img
                                                                     src={RestartIcon}
                                                                     alt="Restart"
@@ -265,7 +266,7 @@ const ProjectsTab = ({
                                                                         opacity: actionLoading[restartKey] ? 0.4 : 0.9
                                                                     }}
                                                                     onClick={() => !actionLoading[restartKey] && handleServiceAction('restart', restartKey)}
-                                                                    title="Restart service"
+                                                                    title={pipeline?.useDocker ? "Restart Docker container" : "Restart service"}
                                                                 />
                                                             )}
                                                         </div>
