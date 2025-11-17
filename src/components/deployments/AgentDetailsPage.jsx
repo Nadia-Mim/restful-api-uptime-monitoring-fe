@@ -69,11 +69,6 @@ const AgentDetailsPage = () => {
     };
 
     const styles = {
-        container: {
-            padding: '20px',
-            maxWidth: '1200px',
-            margin: '0 auto'
-        },
         header: {
             display: 'flex',
             alignItems: 'center',
@@ -178,8 +173,7 @@ const AgentDetailsPage = () => {
             padding: '15px',
             background: 'rgba(69, 69, 230, 0.05)',
             borderRadius: '6px',
-            flex: 1,
-            minWidth: '120px'
+            flex: 1
         },
         statValue: {
             fontSize: '28px',
@@ -194,7 +188,7 @@ const AgentDetailsPage = () => {
     };
 
     return (
-        <div style={styles.container}>
+        <div>
             {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}>
                     <Loader />
@@ -203,8 +197,8 @@ const AgentDetailsPage = () => {
                 <>
                     {/* Header with glass-toolbar design matching ApiDetails */}
                     <div className="glass-toolbar" style={{ marginBottom: 16 }}>
-                        <div style={{ fontWeight: 700, fontSize: 18 }}>{data.agent?.name || 'Agent Details'}</div>
-                        {data.agent?.status && (
+                        <div style={{ fontWeight: 700, fontSize: 18 }}>{data?.agent?.name || 'Agent Details'}</div>
+                        {data?.agent?.status && (
                             <span
                                 className={`glass-badge ${data.agent.status === 'online' ? 'success' : 'danger'}`}
                                 style={{ padding: '4px 10px', borderRadius: 10, fontSize: 12 }}
@@ -243,65 +237,67 @@ const AgentDetailsPage = () => {
                                 <div style={styles.sectionTitle}>Agent Information</div>
                                 <div style={styles.infoRow}>
                                     <span style={styles.label}>Agent ID</span>
-                                    <span style={styles.value}>{data.agent?._id?.slice(-12)}</span>
+                                    <span style={styles.value}>{data?.agent?._id?.slice(-12)}</span>
                                 </div>
                                 <div style={styles.infoRow}>
                                     <span style={styles.label}>Host Type</span>
-                                    <span style={styles.value}>{data.agent?.hostType}</span>
+                                    <span style={styles.value}>{data?.agent?.hostType}</span>
                                 </div>
                                 <div style={styles.infoRow}>
                                     <span style={styles.label}>Status</span>
-                                    <span style={styles.value}>{getStatusBadge(data.agent?.status)}</span>
+                                    <span style={styles.value}>{getStatusBadge(data?.agent?.status)}</span>
                                 </div>
-                                {data.agent?.description && (
+                                {data?.agent?.description && (
                                     <div style={styles.infoRow}>
                                         <span style={styles.label}>Description</span>
-                                        <span style={styles.value}>{data.agent?.description}</span>
+                                        <span style={styles.value}>{data.agent.description}</span>
                                     </div>
                                 )}
                             </div>
 
-                            <div style={styles.section}>
-                                <div style={styles.sectionTitle}>System Information</div>
-                                {data.agent?.hostname && (
-                                    <div style={styles.infoRow}>
-                                        <span style={styles.label}>Hostname</span>
-                                        <span style={styles.value}>{data.agent?.hostname}</span>
-                                    </div>
-                                )}
-                                {data.agent?.platform && (
-                                    <div style={styles.infoRow}>
-                                        <span style={styles.label}>Platform</span>
-                                        <span style={styles.value}>{data.agent?.platform}</span>
-                                    </div>
-                                )}
-                                {data.agent?.arch && (
-                                    <div style={styles.infoRow}>
-                                        <span style={styles.label}>Architecture</span>
-                                        <span style={styles.value}>{data.agent?.arch}</span>
-                                    </div>
-                                )}
-                                {data.agent?.nodeVersion && (
-                                    <div style={styles.infoRow}>
-                                        <span style={styles.label}>Node Version</span>
-                                        <span style={styles.value}>{data.agent?.nodeVersion}</span>
-                                    </div>
-                                )}
-                            </div>
+                            {(data?.agent?.hostname || data?.agent?.platform || data?.agent?.arch || data?.agent?.nodeVersion) && (
+                                <div style={styles.section}>
+                                    <div style={styles.sectionTitle}>System Information</div>
+                                    {data?.agent?.hostname && (
+                                        <div style={styles.infoRow}>
+                                            <span style={styles.label}>Hostname</span>
+                                            <span style={styles.value}>{data.agent.hostname}</span>
+                                        </div>
+                                    )}
+                                    {data?.agent?.platform && (
+                                        <div style={styles.infoRow}>
+                                            <span style={styles.label}>Platform</span>
+                                            <span style={styles.value}>{data.agent.platform}</span>
+                                        </div>
+                                    )}
+                                    {data?.agent?.arch && (
+                                        <div style={styles.infoRow}>
+                                            <span style={styles.label}>Architecture</span>
+                                            <span style={styles.value}>{data.agent.arch}</span>
+                                        </div>
+                                    )}
+                                    {data?.agent?.nodeVersion && (
+                                        <div style={styles.infoRow}>
+                                            <span style={styles.label}>Node Version</span>
+                                            <span style={styles.value}>{data.agent.nodeVersion}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div style={styles.section}>
                                 <div style={styles.sectionTitle}>Activity</div>
                                 <div style={styles.infoRow}>
                                     <span style={styles.label}>Last Seen</span>
-                                    <span style={styles.value}>{formatDate(data.agent?.lastSeenAt)}</span>
+                                    <span style={styles.value}>{formatDate(data?.agent?.lastSeenAt)}</span>
                                 </div>
                                 <div style={styles.infoRow}>
                                     <span style={styles.label}>Registered</span>
-                                    <span style={styles.value}>{formatDate(data.agent?.createdAt)}</span>
+                                    <span style={styles.value}>{formatDate(data?.agent?.createdAt)}</span>
                                 </div>
                                 <div style={styles.infoRow}>
                                     <span style={styles.label}>Assigned Projects</span>
-                                    <span style={styles.value}>{data.assignedProjects?.length || 0}</span>
+                                    <span style={styles.value}>{data?.assignedProjects?.length || 0}</span>
                                 </div>
                             </div>
                         </div>
@@ -309,7 +305,7 @@ const AgentDetailsPage = () => {
 
                     {activeTab === 'projects' && (
                         <div>
-                            {data.assignedProjects?.length > 0 ? (
+                            {data?.assignedProjects?.length > 0 ? (
                                 data.assignedProjects.map((project, idx) => (
                                     <div key={idx} style={styles.projectCard}>
                                         <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: '#fff' }}>
@@ -341,7 +337,7 @@ const AgentDetailsPage = () => {
 
                     {activeTab === 'jobs' && (
                         <div style={styles.section}>
-                            {data.recentJobs?.length > 0 ? (
+                            {data?.recentJobs?.length > 0 ? (
                                 <table style={styles.historyTable}>
                                     <thead>
                                         <tr>
@@ -357,7 +353,7 @@ const AgentDetailsPage = () => {
                                         {data.recentJobs.map((job, idx) => (
                                             <tr key={idx}>
                                                 <td style={styles.tableCell}>{job.projectId?.name || 'N/A'}</td>
-                                                <td style={styles.tableCell}>{job.environment?.toUpperCase()}</td>
+                                                <td style={styles.tableCell}>{job.payload?.environment?.toUpperCase() || 'N/A'}</td>
                                                 <td style={styles.tableCell}>{job.type}</td>
                                                 <td style={styles.tableCell}>{getStatusBadge(job.status)}</td>
                                                 <td style={styles.tableCell}>{formatDate(job.createdAt)}</td>
@@ -379,32 +375,26 @@ const AgentDetailsPage = () => {
                     {activeTab === 'stats' && (
                         <div>
                             <div style={styles.section}>
-                                <div style={styles.sectionTitle}>Overall Statistics</div>
-                                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                                <div style={styles.sectionTitle}>Job Statistics</div>
+                                <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap' }}>
                                     <div style={styles.statBox}>
-                                        <div style={styles.statValue}>{data.statistics?.totalJobs || 0}</div>
-                                        <div style={styles.statLabel}>Total Jobs</div>
+                                        <div style={styles.statValue}>{data?.statistics?.totalJobs || 0}</div>
+                                        <div style={styles.statLabel}>Total</div>
                                     </div>
                                     <div style={styles.statBox}>
-                                        <div style={{ ...styles.statValue, color: '#4CAF50' }}>
-                                            {data.statistics?.successfulJobs || 0}
-                                        </div>
+                                        <div style={{ ...styles.statValue, color: '#4CAF50' }}>{data?.statistics?.successfulJobs || 0}</div>
                                         <div style={styles.statLabel}>Successful</div>
                                     </div>
                                     <div style={styles.statBox}>
-                                        <div style={{ ...styles.statValue, color: '#EF5350' }}>
-                                            {data.statistics?.failedJobs || 0}
-                                        </div>
+                                        <div style={{ ...styles.statValue, color: '#EF5350' }}>{data?.statistics?.failedJobs || 0}</div>
                                         <div style={styles.statLabel}>Failed</div>
                                     </div>
                                     <div style={styles.statBox}>
-                                        <div style={{ ...styles.statValue, color: '#FFA726' }}>
-                                            {data.statistics?.runningJobs || 0}
-                                        </div>
+                                        <div style={{ ...styles.statValue, color: '#FFA726' }}>{data?.statistics?.runningJobs || 0}</div>
                                         <div style={styles.statLabel}>Running</div>
                                     </div>
                                     <div style={styles.statBox}>
-                                        <div style={styles.statValue}>{data.statistics?.successRate || 0}%</div>
+                                        <div style={styles.statValue}>{data?.statistics?.successRate || 0}%</div>
                                         <div style={styles.statLabel}>Success Rate</div>
                                     </div>
                                 </div>
@@ -412,21 +402,21 @@ const AgentDetailsPage = () => {
 
                             <div style={styles.section}>
                                 <div style={styles.sectionTitle}>Jobs by Type (Last 30 Days)</div>
-                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                                     <div style={styles.statBox}>
-                                        <div style={styles.statValue}>{data.statistics?.jobsByType?.deploy || 0}</div>
+                                        <div style={{ ...styles.statValue, color: '#4545E6' }}>{data?.statistics?.jobsByType?.deploy || 0}</div>
                                         <div style={styles.statLabel}>Deploys</div>
                                     </div>
                                     <div style={styles.statBox}>
-                                        <div style={styles.statValue}>{data.statistics?.jobsByType?.start || 0}</div>
+                                        <div style={{ ...styles.statValue, color: '#4CAF50' }}>{data?.statistics?.jobsByType?.start || 0}</div>
                                         <div style={styles.statLabel}>Starts</div>
                                     </div>
                                     <div style={styles.statBox}>
-                                        <div style={styles.statValue}>{data.statistics?.jobsByType?.stop || 0}</div>
+                                        <div style={{ ...styles.statValue, color: '#EF5350' }}>{data?.statistics?.jobsByType?.stop || 0}</div>
                                         <div style={styles.statLabel}>Stops</div>
                                     </div>
                                     <div style={styles.statBox}>
-                                        <div style={styles.statValue}>{data.statistics?.jobsByType?.restart || 0}</div>
+                                        <div style={{ ...styles.statValue, color: '#FFA726' }}>{data?.statistics?.jobsByType?.restart || 0}</div>
                                         <div style={styles.statLabel}>Restarts</div>
                                     </div>
                                 </div>

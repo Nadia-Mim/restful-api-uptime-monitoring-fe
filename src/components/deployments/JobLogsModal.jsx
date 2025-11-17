@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 import { CustomModal, CustomModalBody, CustomModalHeader } from '../common/modals/customModal/CustomModal';
 import Loader from '../common/loader/Loader';
 import Server from '../../../Server';
@@ -14,6 +15,8 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
     const [logs, setLogs] = useState([]);
     const [status, setStatus] = useState('CONNECTING'); // CONNECTING | RUNNING | SUCCESS | FAILED | DISCONNECTED
     const [error, setError] = useState(null);
+    const [jobCompleted, setJobCompleted] = useState(false);
+    const [loadingJobStatus, setLoadingJobStatus] = useState(true);
     const logsEndRef = useRef(null);
     const eventSourceRef = useRef(null);
 
@@ -24,9 +27,48 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
         }
     }, [logs]);
 
-    // Connect to SSE stream
+    // Check job status first
     useEffect(() => {
         if (!visible || !jobId) return;
+
+        const checkJobStatus = async () => {
+            setLoadingJobStatus(true);
+            try {
+                const res = await axios.get(`${Server.baseApi}/jobs?jobId=${encodeURIComponent(jobId)}&limit=1`);
+                const job = res?.data?.data?.[0];
+                if (job && (job.status === 'SUCCESS' || job.status === 'FAILED')) {
+                    setJobCompleted(true);
+                    setStatus(job.status);
+                    setLogs([{
+                        type: 'info',
+                        message: `📋 Job completed at ${new Date(job.finishedAt || job.updatedAt).toLocaleString()}`,
+                        timestamp: job.finishedAt || job.updatedAt
+                    }, {
+                        type: 'warn',
+                        message: '⚠️ Logs are only available during real-time execution. Historical logs are not stored.',
+                        timestamp: new Date().toISOString()
+                    }, {
+                        type: job.status === 'SUCCESS' ? 'success' : 'error',
+                        message: `Job finished with status: ${job.status}`,
+                        timestamp: job.finishedAt || job.updatedAt
+                    }]);
+                } else {
+                    setJobCompleted(false);
+                }
+            } catch (err) {
+                console.error('Error checking job status:', err);
+                setJobCompleted(false);
+            } finally {
+                setLoadingJobStatus(false);
+            }
+        };
+
+        checkJobStatus();
+    }, [visible, jobId]);
+
+    // Connect to SSE stream (only for running jobs)
+    useEffect(() => {
+        if (!visible || !jobId || loadingJobStatus || jobCompleted) return;
 
         const url = `${Server.baseApi}/jobs/stream?jobId=${encodeURIComponent(jobId)}`;
 
@@ -200,7 +242,14 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
                         lineHeight: 1.6
                     }}
                 >
-                    {status === 'CONNECTING' && logs.length === 0 && (
+                    {loadingJobStatus && logs.length === 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#9fb0c6' }}>
+                            <Loader />
+                            <span>Loading job information...</span>
+                        </div>
+                    )}
+
+                    {!loadingJobStatus && status === 'CONNECTING' && logs.length === 0 && !jobCompleted && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#9fb0c6' }}>
                             <Loader />
                             <span>Connecting to log stream...</span>

@@ -708,7 +708,7 @@ const Deployments = () => {
     };
 
     return (
-        <div style={{ padding: '20px' }}>
+        <div style={{ paddingLeft: '15', paddingRight: '15' }}>
             {loading && <Loader />}
 
             {/* Tabs */}

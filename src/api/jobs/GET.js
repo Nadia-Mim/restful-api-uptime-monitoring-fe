@@ -1,3 +1,4 @@
+import axios from 'axios';
 import Server from '../../../Server';
 
 /**
@@ -17,9 +18,9 @@ export const listJobs = async (filters = {}) => {
         if (filters.skip) params.set('skip', String(filters.skip));
 
         const queryString = params.toString();
-        const url = `/jobs${queryString ? `?${queryString}` : ''}`;
+        const url = `${Server.baseApi}/jobs${queryString ? `?${queryString}` : ''}`;
 
-        const res = await Server.get(url);
+        const res = await axios.get(url);
         return [true, { data: res?.data?.data || [], total: res?.data?.total || 0 }];
     } catch (e) {
         console.error('[listJobs] error', e);
@@ -34,7 +35,7 @@ export const listJobs = async (filters = {}) => {
  */
 export const getJob = async (jobId) => {
     try {
-        const res = await Server.get(`/jobs?jobId=${encodeURIComponent(jobId)}&limit=1`);
+        const res = await axios.get(`${Server.baseApi}/jobs?jobId=${encodeURIComponent(jobId)}&limit=1`);
         const jobs = res?.data?.data || [];
         return [true, jobs[0] || null];
     } catch (e) {

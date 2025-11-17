@@ -108,7 +108,7 @@ const ProjectDetailsPage = () => {
         if (!selectedEnv) return;
 
         const loadingKey = `${type}-${selectedEnv}`;
-        
+
         // Get agent for selected environment
         const target = data.project?.deploymentTargets?.find(t => t.environment === selectedEnv);
         const agent = data.stats?.[selectedEnv]?.agent;
@@ -166,7 +166,7 @@ const ProjectDetailsPage = () => {
 
     const executeAction = async (type, loadingKey, agent) => {
         console.log('executeAction called:', { type, loadingKey, agent });
-        
+
         const { dispatchJob } = await import('../../api/jobs/POST');
         const [ok, result] = await dispatchJob({
             projectId: data.project._id,
@@ -210,11 +210,6 @@ const ProjectDetailsPage = () => {
     const pipeline = data?.pipelineTemplate;
 
     const styles = {
-        container: {
-            padding: '20px',
-            maxWidth: '1200px',
-            margin: '0 auto'
-        },
         header: {
             display: 'flex',
             alignItems: 'center',
@@ -369,7 +364,7 @@ const ProjectDetailsPage = () => {
     };
 
     return (
-        <div style={styles.container}>
+        <div>
             {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}>
                     <Loader />
@@ -664,16 +659,17 @@ const ProjectDetailsPage = () => {
             )}
 
             {/* Job Logs Modal */}
-            <JobLogsModal
-                visible={jobLogsModal.visible}
-                jobId={jobLogsModal.jobId}
-                jobInfo={jobLogsModal.jobInfo}
-                onClose={() => {
-                    console.log('JobLogsModal closing');
-                    setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
-                    loadDetails(); // Refresh data after action
-                }}
-            />
+            {jobLogsModal.visible && (
+                <JobLogsModal
+                    jobId={jobLogsModal.jobId}
+                    jobInfo={jobLogsModal.jobInfo}
+                    onClose={() => {
+                        console.log('JobLogsModal closing');
+                        setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
+                        loadDetails(); // Refresh data after action
+                    }}
+                />
+            )}
 
             {/* Debug: Show modal state */}
             {console.log('Current jobLogsModal state:', jobLogsModal)}
