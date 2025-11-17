@@ -154,6 +154,18 @@ const ProjectDetailsPage = () => {
             fontSize: '14px',
             fontWeight: 500
         },
+        actionButton: (color, isLoading) => ({
+            background: 'transparent',
+            border: `1px solid ${color}`,
+            color: '#fff',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            fontSize: '13px',
+            fontWeight: 500,
+            opacity: isLoading ? 0.6 : 1,
+            transition: 'all 0.2s ease'
+        }),
         title: {
             fontSize: '24px',
             fontWeight: 600,
@@ -165,18 +177,6 @@ const ProjectDetailsPage = () => {
             alignItems: 'center',
             gap: '10px',
             marginLeft: 'auto'
-        },
-        actionButton: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 14px',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: 500,
-            border: 'none',
-            transition: 'all 0.2s'
         },
         deployButton: {
             background: 'rgba(69, 69, 230, 0.2)',
@@ -296,75 +296,104 @@ const ProjectDetailsPage = () => {
                 </div>
             ) : data ? (
                 <>
-                    <div style={styles.header}>
-                        <button style={styles.backButton} onClick={() => navigate('/deployments')}>
-                            ← Back
-                        </button>
-                        <div style={styles.title}>
-                            {data.project?.name}
-                            {selectedEnv && data.stats?.[selectedEnv] && (() => {
-                                const status = data.stats[selectedEnv].runtimeStatus || 'unknown';
-                                const isRunning = status === 'running';
-                                const isStopped = status === 'stopped';
-                                return (
-                                    <span
-                                        className={`glass-badge ${isRunning ? 'success' : isStopped ? 'danger' : 'secondary'}`}
-                                        style={{ padding: '4px 10px', borderRadius: 10, fontSize: 12, marginLeft: 12 }}
-                                    >
-                                        {status.toUpperCase()}
-                                    </span>
-                                );
-                            })()}
-                        </div>
+                    {/* Header with glass-toolbar design matching ApiDetails */}
+                    <div className="glass-toolbar" style={{ marginBottom: 16 }}>
+                        <div style={{ fontWeight: 700, fontSize: 18 }}>{data.project?.name}</div>
+                        {selectedEnv && data.stats?.[selectedEnv] && (() => {
+                            const status = data.stats[selectedEnv].runtimeStatus || 'unknown';
+                            const isRunning = status === 'running';
+                            const isStopped = status === 'stopped';
+                            return (
+                                <span
+                                    className={`glass-badge ${isRunning ? 'success' : isStopped ? 'danger' : 'secondary'}`}
+                                    style={{ padding: '4px 10px', borderRadius: 10, fontSize: 12 }}
+                                >
+                                    {status.toUpperCase()}
+                                </span>
+                            );
+                        })()}
 
                         {envOptions.length > 0 && (
-                            <div style={styles.actionsContainer}>
+                            <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
                                 <button
-                                    style={{ ...styles.actionButton, ...styles.deployButton, opacity: actionLoading[`deploy-${selectedEnv}`] ? 0.5 : 1 }}
+                                    style={styles.actionButton('#4545E6', actionLoading[`deploy-${selectedEnv}`])}
                                     onClick={() => !actionLoading[`deploy-${selectedEnv}`] && handleAction('deploy')}
                                     disabled={actionLoading[`deploy-${selectedEnv}`]}
+                                    onMouseEnter={(e) => {
+                                        if (!actionLoading[`deploy-${selectedEnv}`]) {
+                                            e.target.style.background = '#4545E6';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.background = 'transparent';
+                                    }}
                                 >
-                                    <img src={RunIcon} alt="Deploy" style={{ width: 16, height: 16 }} />
-                                    Deploy
+                                    {actionLoading[`deploy-${selectedEnv}`] ? 'Deploying...' : 'Deploy'}
                                 </button>
 
                                 {(pipeline?.useDocker || pipeline?.runCommands?.length > 0) && (
                                     <button
-                                        style={{ ...styles.actionButton, ...styles.startButton, opacity: actionLoading[`start-${selectedEnv}`] ? 0.5 : 1 }}
+                                        style={styles.actionButton('#4CAF50', actionLoading[`start-${selectedEnv}`])}
                                         onClick={() => !actionLoading[`start-${selectedEnv}`] && handleAction('start')}
                                         disabled={actionLoading[`start-${selectedEnv}`]}
-                                        title={pipeline?.useDocker ? "Start Docker container" : "Start service"}
+                                        onMouseEnter={(e) => {
+                                            if (!actionLoading[`start-${selectedEnv}`]) {
+                                                e.target.style.background = '#4CAF50';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.background = 'transparent';
+                                        }}
                                     >
-                                        <img src={RunIcon} alt="Start" style={{ width: 16, height: 16 }} />
-                                        Start
+                                        {actionLoading[`start-${selectedEnv}`] ? 'Starting...' : 'Start'}
                                     </button>
                                 )}
 
                                 {(pipeline?.useDocker || pipeline?.stopCommands?.length > 0) && (
                                     <button
-                                        style={{ ...styles.actionButton, ...styles.stopButton, opacity: actionLoading[`stop-${selectedEnv}`] ? 0.5 : 1 }}
+                                        style={styles.actionButton('#EF5350', actionLoading[`stop-${selectedEnv}`])}
                                         onClick={() => !actionLoading[`stop-${selectedEnv}`] && handleAction('stop')}
                                         disabled={actionLoading[`stop-${selectedEnv}`]}
-                                        title={pipeline?.useDocker ? "Stop Docker container" : "Stop service"}
+                                        onMouseEnter={(e) => {
+                                            if (!actionLoading[`stop-${selectedEnv}`]) {
+                                                e.target.style.background = '#EF5350';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.background = 'transparent';
+                                        }}
                                     >
-                                        <img src={StopIcon} alt="Stop" style={{ width: 16, height: 16 }} />
-                                        Stop
+                                        {actionLoading[`stop-${selectedEnv}`] ? 'Stopping...' : 'Stop'}
                                     </button>
                                 )}
 
                                 {(pipeline?.useDocker || (pipeline?.runCommands?.length > 0 && pipeline?.stopCommands?.length > 0)) && (
                                     <button
-                                        style={{ ...styles.actionButton, ...styles.restartButton, opacity: actionLoading[`restart-${selectedEnv}`] ? 0.5 : 1 }}
+                                        style={styles.actionButton('#FFA726', actionLoading[`restart-${selectedEnv}`])}
                                         onClick={() => !actionLoading[`restart-${selectedEnv}`] && handleAction('restart')}
                                         disabled={actionLoading[`restart-${selectedEnv}`]}
-                                        title={pipeline?.useDocker ? "Restart Docker container" : "Restart service"}
+                                        onMouseEnter={(e) => {
+                                            if (!actionLoading[`restart-${selectedEnv}`]) {
+                                                e.target.style.background = '#FFA726';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.background = 'transparent';
+                                        }}
                                     >
-                                        <img src={RestartIcon} alt="Restart" style={{ width: 16, height: 16 }} />
-                                        Restart
+                                        {actionLoading[`restart-${selectedEnv}`] ? 'Restarting...' : 'Restart'}
                                     </button>
                                 )}
                             </div>
                         )}
+
+                        <div
+                            className="glass-button-primary"
+                            style={{ cursor: 'pointer', padding: '8px 12px', borderRadius: 10 }}
+                            onClick={() => navigate('/deployments')}
+                        >
+                            Back
+                        </div>
                     </div>
 
                     <div style={styles.tabs}>

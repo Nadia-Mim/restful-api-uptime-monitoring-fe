@@ -201,14 +201,25 @@ const AgentDetailsPage = () => {
                 </div>
             ) : data ? (
                 <>
-                    <div style={styles.header}>
-                        <div style={styles.headerLeft}>
-                            <button style={styles.backButton} onClick={() => navigate('/deployments')}>
-                                ← Back
-                            </button>
-                            <div style={styles.title}>{data.agent?.name}</div>
+                    {/* Header with glass-toolbar design matching ApiDetails */}
+                    <div className="glass-toolbar" style={{ marginBottom: 16 }}>
+                        <div style={{ fontWeight: 700, fontSize: 18 }}>{data.agent?.name || 'Agent Details'}</div>
+                        {data.agent?.status && (
+                            <span
+                                className={`glass-badge ${data.agent.status === 'online' ? 'success' : 'danger'}`}
+                                style={{ padding: '4px 10px', borderRadius: 10, fontSize: 12 }}
+                            >
+                                {data.agent.status.toUpperCase()}
+                            </span>
+                        )}
+
+                        <div
+                            className="glass-button-primary"
+                            style={{ cursor: 'pointer', padding: '8px 12px', borderRadius: 10, marginLeft: 'auto' }}
+                            onClick={() => navigate('/deployments')}
+                        >
+                            Back
                         </div>
-                        {getStatusBadge(data.agent?.status)}
                     </div>
 
                     <div style={styles.tabs}>
