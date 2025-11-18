@@ -184,20 +184,28 @@ const Deployments = () => {
      */
     const reload = async () => {
         setLoading(true);
-        
-        // Load projects for current environment
+        await Promise.all([loadProjects(), loadTemplates(), loadAgents()]);
+        setLoading(false);
+    };
+
+    // Load projects for current environment
+    const loadProjects = async () => {
         const [projectsSuccess, projectsData] = await listDeploymentProjects(environment);
         if (projectsSuccess) {
             setProjects(projectsData);
         }
-        
-        // Load pipeline templates
+    };
+
+    // Load pipeline templates
+    const loadTemplates = async () => {
         const [templatesSuccess, templatesData] = await listPipelineTemplates();
         if (templatesSuccess) {
             setTemplates(templatesData);
         }
-        
-        // Load agents (dynamically imported)
+    };
+
+    // Load agents
+    const loadAgents = async () => {
         try {
             const { listAgents } = await import('../../api/agents/GET');
             const [agentsSuccess, agentsData] = await listAgents();
@@ -205,11 +213,8 @@ const Deployments = () => {
                 setAgents(agentsData);
             }
         } catch (error) {
-            // Silently fail if agents API is not available
             console.error('Failed to load agents:', error);
         }
-        
-        setLoading(false);
     };
 
     useEffect(() => {
@@ -234,7 +239,27 @@ const Deployments = () => {
         return () => timer && clearInterval(timer);
     }, [agents]);
 
-    useEffect(() => { reload(); }, [environment, activeTab]);
+    // Load data based on active tab and dependencies
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true);
+            
+            if (activeTab === 'projects') {
+                // Projects tab needs: projects (env-specific), templates (for pipeline info), agents (for deployment)
+                await Promise.all([loadProjects(), loadTemplates(), loadAgents()]);
+            } else if (activeTab === 'pipelines') {
+                // Pipelines tab only needs: templates
+                await loadTemplates();
+            } else if (activeTab === 'agents') {
+                // Agents tab only needs: agents
+                await loadAgents();
+            }
+            
+            setLoading(false);
+        };
+        
+        loadData();
+    }, [activeTab, environment]);
 
     // Project handlers
     const openAddProject = () => {
@@ -870,7 +895,11 @@ const Deployments = () => {
                 visible={jobLogsModal.visible}
                 jobId={jobLogsModal.jobId}
                 jobInfo={jobLogsModal.jobInfo}
-                onClose={() => setJobLogsModal({ visible: false, jobId: null, jobInfo: {} })}
+                onClose={() => {
+                    setJobLogsModal({ visible: false, jobId: null, jobInfo: {} });
+                    // Reload data to sync with backend after modal closes
+                    reload();
+                }}
             />
 
             <ConfirmDialog

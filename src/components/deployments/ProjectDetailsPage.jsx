@@ -59,7 +59,7 @@ const ProjectDetailsPage = () => {
         const [ok, result] = await getProjectDetails(projectId);
         setLoading(false);
         if (ok) {
-            setData(result);
+            setData(result); // Only update if successful
         }
     };
 
@@ -662,6 +662,8 @@ const ProjectDetailsPage = () => {
                 jobInfo={jobLogsModal.jobInfo}
                 onClose={() => {
                     setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
+                    // Reload project details to sync with backend after modal closes
+                    loadDetails();
                 }}
             />
 
