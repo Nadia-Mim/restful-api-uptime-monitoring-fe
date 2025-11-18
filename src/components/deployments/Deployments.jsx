@@ -178,17 +178,37 @@ const Deployments = () => {
     });
     const [actionLoading, setActionLoading] = useState({});
 
+    /**
+     * Reload all data: projects, templates, and agents
+     * Each API returns [success, data] tuple
+     */
     const reload = async () => {
         setLoading(true);
-        const [okP, dataP] = await listDeploymentProjects(environment);
-        const [okT, dataT] = await listPipelineTemplates();
-        if (okP) setProjects(dataP);
-        if (okT) setTemplates(dataT);
+        
+        // Load projects for current environment
+        const [projectsSuccess, projectsData] = await listDeploymentProjects(environment);
+        if (projectsSuccess) {
+            setProjects(projectsData);
+        }
+        
+        // Load pipeline templates
+        const [templatesSuccess, templatesData] = await listPipelineTemplates();
+        if (templatesSuccess) {
+            setTemplates(templatesData);
+        }
+        
+        // Load agents (dynamically imported)
         try {
             const { listAgents } = await import('../../api/agents/GET');
-            const [okA, dataA] = await listAgents();
-            if (okA) setAgents(dataA);
-        } catch { }
+            const [agentsSuccess, agentsData] = await listAgents();
+            if (agentsSuccess) {
+                setAgents(agentsData);
+            }
+        } catch (error) {
+            // Silently fail if agents API is not available
+            console.error('Failed to load agents:', error);
+        }
+        
         setLoading(false);
     };
 
