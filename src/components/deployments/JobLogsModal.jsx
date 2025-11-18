@@ -15,8 +15,6 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
     const [logs, setLogs] = useState([]);
     const [status, setStatus] = useState('CONNECTING'); // CONNECTING | RUNNING | SUCCESS | FAILED | DISCONNECTED
     const [error, setError] = useState(null);
-    const [jobCompleted, setJobCompleted] = useState(false);
-    const [loadingJobStatus, setLoadingJobStatus] = useState(true);
     const logsEndRef = useRef(null);
     const eventSourceRef = useRef(null);
 
@@ -27,17 +25,23 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
         }
     }, [logs]);
 
-    // Check job status first
+    // Combined: Check job status AND connect to SSE
     useEffect(() => {
         if (!visible || !jobId) return;
 
-        const checkJobStatus = async () => {
-            setLoadingJobStatus(true);
+        let mounted = true;
+        let eventSource = null;
+
+        const init = async () => {
+            // Quick check if job is already completed
             try {
                 const res = await axios.get(`${Server.baseApi}/jobs?jobId=${encodeURIComponent(jobId)}&limit=1`);
                 const job = res?.data?.data?.[0];
+
+                if (!mounted) return;
+
                 if (job && (job.status === 'SUCCESS' || job.status === 'FAILED')) {
-                    setJobCompleted(true);
+                    // Job already completed - show completion message
                     setStatus(job.status);
                     setLogs([{
                         type: 'info',
@@ -52,91 +56,82 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
                         message: `Job finished with status: ${job.status}`,
                         timestamp: job.finishedAt || job.updatedAt
                     }]);
-                } else {
-                    setJobCompleted(false);
+                    return; // Don't connect to SSE
                 }
             } catch (err) {
-                console.error('Error checking job status:', err);
-                setJobCompleted(false);
-            } finally {
-                setLoadingJobStatus(false);
+                // Ignore status check errors - proceed with SSE connection
             }
-        };
 
-        checkJobStatus();
-    }, [visible, jobId]);
+            if (!mounted) return;
 
-    // Connect to SSE stream (only for running jobs)
-    useEffect(() => {
-        if (!visible || !jobId || loadingJobStatus || jobCompleted) return;
+            // Job is running or queued - connect to SSE
+            const url = `${Server.baseApi}/jobs/stream?jobId=${encodeURIComponent(jobId)}`;
 
-        const url = `${Server.baseApi}/jobs/stream?jobId=${encodeURIComponent(jobId)}`;
+            eventSource = new EventSource(url);
+            eventSourceRef.current = eventSource;
 
-        const eventSource = new EventSource(url);
-        eventSourceRef.current = eventSource;
+            let hasReceivedData = false;
 
-        let hasReceivedData = false;
-
-        eventSource.addEventListener('ready', (e) => {
-            try {
-                const data = JSON.parse(e.data);
-                if (data.ok) {
-                    hasReceivedData = true;
-                    setStatus('RUNNING');
-                    setError(null);
-                    setLogs(prev => [...prev, {
-                        type: 'info',
-                        message: `🔗 Connected to job stream (Job ID: ${jobId})`,
-                        timestamp: new Date().toISOString()
-                    }]);
-                }
-            } catch (err) {
-                console.error('Error parsing ready event:', err);
-            }
-        });
-
-        eventSource.addEventListener('log', (e) => {
-            try {
-                hasReceivedData = true;
-                const logEntry = JSON.parse(e.data);
-                setLogs(prev => [...prev, logEntry]);
-            } catch (err) {
-                console.error('Error parsing log event:', err);
-            }
-        });
-
-        eventSource.addEventListener('complete', (e) => {
-            try {
-                hasReceivedData = true;
-                const data = JSON.parse(e.data);
-                setStatus(data.status || 'SUCCESS');
-                setLogs(prev => [...prev, {
-                    type: 'success',
-                    message: `✅ Job completed with status: ${data.status}`,
-                    timestamp: new Date().toISOString()
-                }]);
-                // Close connection after completion
-                setTimeout(() => {
-                    if (eventSourceRef.current) {
-                        eventSourceRef.current.close();
-                        eventSourceRef.current = null;
+            eventSource.addEventListener('ready', (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.ok && mounted) {
+                        hasReceivedData = true;
+                        setStatus('RUNNING');
+                        setError(null);
+                        setLogs(prev => [...prev, {
+                            type: 'info',
+                            message: `🔗 Connected to job stream (Job ID: ${jobId})`,
+                            timestamp: new Date().toISOString()
+                        }]);
                     }
-                }, 100);
-            } catch (err) {
-                console.error('Error parsing complete event:', err);
-            }
-        });
+                } catch (_) { }
+            });
 
-        eventSource.onerror = (e) => {
-            // Only show error if we haven't received any data (real connection failure)
-            // If we've received data, the error is just the stream closing normally
-            if (!hasReceivedData) {
-                setStatus('DISCONNECTED');
-                setError('Failed to connect to log stream');
-            }
+            eventSource.addEventListener('log', (e) => {
+                try {
+                    hasReceivedData = true;
+                    const logEntry = JSON.parse(e.data);
+                    if (mounted) {
+                        setLogs(prev => [...prev, logEntry]);
+                    }
+                } catch (_) { }
+            });
+
+            eventSource.addEventListener('complete', (e) => {
+                try {
+                    hasReceivedData = true;
+                    const data = JSON.parse(e.data);
+                    if (mounted) {
+                        setStatus(data.status || 'SUCCESS');
+                        setLogs(prev => [...prev, {
+                            type: 'success',
+                            message: `✅ Job completed with status: ${data.status}`,
+                            timestamp: new Date().toISOString()
+                        }]);
+                    }
+                    // Close connection after completion
+                    setTimeout(() => {
+                        if (eventSource) {
+                            eventSource.close();
+                            eventSourceRef.current = null;
+                        }
+                    }, 100);
+                } catch (_) { }
+            });
+
+            eventSource.onerror = () => {
+                if (!hasReceivedData && mounted) {
+                    setStatus('DISCONNECTED');
+                    setError('Failed to connect to log stream. Please check if the backend server is running.');
+                }
+            };
         };
+
+        init();
 
         return () => {
+            mounted = false;
             if (eventSourceRef.current) {
                 eventSourceRef.current.close();
                 eventSourceRef.current = null;
@@ -242,14 +237,7 @@ const JobLogsModal = ({ jobId, visible, onClose, jobInfo = {} }) => {
                         lineHeight: 1.6
                     }}
                 >
-                    {loadingJobStatus && logs.length === 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#9fb0c6' }}>
-                            <Loader />
-                            <span>Loading job information...</span>
-                        </div>
-                    )}
-
-                    {!loadingJobStatus && status === 'CONNECTING' && logs.length === 0 && !jobCompleted && (
+                    {status === 'CONNECTING' && logs.length === 0 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#9fb0c6' }}>
                             <Loader />
                             <span>Connecting to log stream...</span>

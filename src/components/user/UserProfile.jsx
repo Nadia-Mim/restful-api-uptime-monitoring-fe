@@ -118,7 +118,7 @@ const UserProfile = () => {
         }),
         onSubmit: async (value) => {
             const formData = { ...values };
-            
+
             // If there's a new profile image, convert to base64
             if (profileImage) {
                 const reader = new FileReader();

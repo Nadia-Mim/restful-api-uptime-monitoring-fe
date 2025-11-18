@@ -144,67 +144,88 @@ const ProjectsTab = ({
                                                 };
 
                                                 const executeDeploy = async () => {
-                                                    setActionLoading({ ...actionLoading, [deployKey]: true });
-                                                    const { dispatchJob } = await import('../../api/jobs/POST');
-                                                    const [ok, data] = await dispatchJob({
-                                                        projectId: p._id,
-                                                        environment: target.environment,
-                                                        type: 'deploy'
-                                                    });
-                                                    setActionLoading({ ...actionLoading, [deployKey]: false });
+                                                    const key = deployKey;
+                                                    setActionLoading(prev => ({ ...prev, [key]: true }));
 
-                                                    if (ok && data?.jobId) {
-                                                        setJobLogsModal({
-                                                            visible: true,
-                                                            jobId: data.jobId,
-                                                            jobInfo: {
-                                                                projectName: p.name,
-                                                                environment: target.environment,
-                                                                type: 'deploy',
-                                                                agentName: agent?.name
-                                                            }
+                                                    try {
+                                                        const { dispatchJob } = await import('../../api/jobs/POST');
+                                                        const [ok, data] = await dispatchJob({
+                                                            projectId: p._id,
+                                                            environment: target.environment,
+                                                            type: 'deploy'
                                                         });
-                                                    } else {
-                                                        setConfirmDialog({
-                                                            visible: true,
-                                                            title: '❌ Deployment Failed',
-                                                            message: data || 'Failed to start deployment. Please check your configuration and try again.',
-                                                            type: 'danger',
-                                                            confirmText: 'OK',
-                                                            onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+
+                                                        if (ok && data?.jobId) {
+                                                            setJobLogsModal({
+                                                                visible: true,
+                                                                jobId: data.jobId,
+                                                                jobInfo: {
+                                                                    projectName: p.name,
+                                                                    environment: target.environment,
+                                                                    type: 'deploy',
+                                                                    agentName: agent?.name
+                                                                }
+                                                            });
+                                                        } else {
+                                                            setConfirmDialog({
+                                                                visible: true,
+                                                                title: '❌ Deployment Failed',
+                                                                message: data || 'Failed to start deployment. Please check your configuration and try again.',
+                                                                type: 'danger',
+                                                                confirmText: 'OK',
+                                                                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                                                            });
+                                                        }
+                                                    } catch (error) {
+                                                        // Silently handle errors
+                                                    } finally {
+                                                        // Always clear loading state
+                                                        setActionLoading(prev => {
+                                                            const updated = { ...prev };
+                                                            delete updated[key];
+                                                            return updated;
                                                         });
                                                     }
-                                                };
+                                                }; const handleServiceAction = async (type, loadingKey) => {
+                                                    setActionLoading(prev => ({ ...prev, [loadingKey]: true }));
 
-                                                const handleServiceAction = async (type, loadingKey) => {
-                                                    setActionLoading({ ...actionLoading, [loadingKey]: true });
-                                                    const { dispatchJob } = await import('../../api/jobs/POST');
-                                                    const [ok, data] = await dispatchJob({
-                                                        projectId: p._id,
-                                                        environment: target.environment,
-                                                        type
-                                                    });
-                                                    setActionLoading({ ...actionLoading, [loadingKey]: false });
-
-                                                    if (ok && data?.jobId) {
-                                                        setJobLogsModal({
-                                                            visible: true,
-                                                            jobId: data.jobId,
-                                                            jobInfo: {
-                                                                projectName: p.name,
-                                                                environment: target.environment,
-                                                                type: type,
-                                                                agentName: agent?.name
-                                                            }
+                                                    try {
+                                                        const { dispatchJob } = await import('../../api/jobs/POST');
+                                                        const [ok, data] = await dispatchJob({
+                                                            projectId: p._id,
+                                                            environment: target.environment,
+                                                            type
                                                         });
-                                                    } else {
-                                                        setConfirmDialog({
-                                                            visible: true,
-                                                            title: '❌ Action Failed',
-                                                            message: data || `Failed to ${type} service.`,
-                                                            type: 'danger',
-                                                            confirmText: 'OK',
-                                                            onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+
+                                                        if (ok && data?.jobId) {
+                                                            setJobLogsModal({
+                                                                visible: true,
+                                                                jobId: data.jobId,
+                                                                jobInfo: {
+                                                                    projectName: p.name,
+                                                                    environment: target.environment,
+                                                                    type: type,
+                                                                    agentName: agent?.name
+                                                                }
+                                                            });
+                                                        } else {
+                                                            setConfirmDialog({
+                                                                visible: true,
+                                                                title: '❌ Action Failed',
+                                                                message: data || `Failed to ${type} service.`,
+                                                                type: 'danger',
+                                                                confirmText: 'OK',
+                                                                onConfirm: () => setConfirmDialog({ ...confirmDialog, visible: false })
+                                                            });
+                                                        }
+                                                    } catch (error) {
+                                                        // Silently handle errors
+                                                    } finally {
+                                                        // Always clear loading state
+                                                        setActionLoading(prev => {
+                                                            const updated = { ...prev };
+                                                            delete updated[loadingKey];
+                                                            return updated;
                                                         });
                                                     }
                                                 };

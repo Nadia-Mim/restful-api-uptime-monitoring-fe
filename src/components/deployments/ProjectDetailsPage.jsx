@@ -113,8 +113,6 @@ const ProjectDetailsPage = () => {
         const target = data.project?.deploymentTargets?.find(t => t.environment === selectedEnv);
         const agent = data.stats?.[selectedEnv]?.agent;
 
-        console.log('handleAction:', { type, selectedEnv, target, agent, agentStatus });
-
         // Check if agent exists
         if (!agent) {
             setConfirmDialog({
@@ -165,7 +163,7 @@ const ProjectDetailsPage = () => {
     };
 
     const executeAction = async (type, loadingKey, agent) => {
-        console.log('executeAction called:', { type, loadingKey, agent });
+        setActionLoading(prev => ({ ...prev, [loadingKey]: true }));
 
         const { dispatchJob } = await import('../../api/jobs/POST');
         const [ok, result] = await dispatchJob({
@@ -174,7 +172,7 @@ const ProjectDetailsPage = () => {
             type
         });
 
-        console.log('dispatchJob result:', { ok, result });
+        setActionLoading(prev => ({ ...prev, [loadingKey]: false }));
 
         if (ok && result?.jobId) {
             const modalData = {
@@ -187,7 +185,6 @@ const ProjectDetailsPage = () => {
                     agentName: agent?.name
                 }
             };
-            console.log('Setting jobLogsModal:', modalData);
             setJobLogsModal(modalData);
         } else {
             setConfirmDialog({
@@ -391,60 +388,60 @@ const ProjectDetailsPage = () => {
                         {envOptions.length > 0 && (
                             <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
                                 <button
-                                    style={styles.actionButton('#4545E6', false)}
-                                    onClick={() => handleAction('deploy')}
+                                    style={styles.actionButton('#4545E6', actionLoading[`deploy-${selectedEnv}`])}
+                                    onClick={() => !actionLoading[`deploy-${selectedEnv}`] && handleAction('deploy')}
                                     onMouseEnter={(e) => {
-                                        e.target.style.background = '#4545E6';
+                                        if (!actionLoading[`deploy-${selectedEnv}`]) e.target.style.background = '#4545E6';
                                     }}
                                     onMouseLeave={(e) => {
                                         e.target.style.background = 'transparent';
                                     }}
                                 >
-                                    Deploy
+                                    {actionLoading[`deploy-${selectedEnv}`] ? 'Deploying...' : 'Deploy'}
                                 </button>
 
                                 {(pipeline?.useDocker || pipeline?.runCommands?.length > 0) && (
                                     <button
-                                        style={styles.actionButton('#4CAF50', false)}
-                                        onClick={() => handleAction('start')}
+                                        style={styles.actionButton('#4CAF50', actionLoading[`start-${selectedEnv}`])}
+                                        onClick={() => !actionLoading[`start-${selectedEnv}`] && handleAction('start')}
                                         onMouseEnter={(e) => {
-                                            e.target.style.background = '#4CAF50';
+                                            if (!actionLoading[`start-${selectedEnv}`]) e.target.style.background = '#4CAF50';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.target.style.background = 'transparent';
                                         }}
                                     >
-                                        Start
+                                        {actionLoading[`start-${selectedEnv}`] ? 'Starting...' : 'Start'}
                                     </button>
                                 )}
 
                                 {(pipeline?.useDocker || pipeline?.stopCommands?.length > 0) && (
                                     <button
-                                        style={styles.actionButton('#EF5350', false)}
-                                        onClick={() => handleAction('stop')}
+                                        style={styles.actionButton('#EF5350', actionLoading[`stop-${selectedEnv}`])}
+                                        onClick={() => !actionLoading[`stop-${selectedEnv}`] && handleAction('stop')}
                                         onMouseEnter={(e) => {
-                                            e.target.style.background = '#EF5350';
+                                            if (!actionLoading[`stop-${selectedEnv}`]) e.target.style.background = '#EF5350';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.target.style.background = 'transparent';
                                         }}
                                     >
-                                        Stop
+                                        {actionLoading[`stop-${selectedEnv}`] ? 'Stopping...' : 'Stop'}
                                     </button>
                                 )}
 
                                 {(pipeline?.useDocker || (pipeline?.runCommands?.length > 0 && pipeline?.stopCommands?.length > 0)) && (
                                     <button
-                                        style={styles.actionButton('#FFA726', false)}
-                                        onClick={() => handleAction('restart')}
+                                        style={styles.actionButton('#FFA726', actionLoading[`restart-${selectedEnv}`])}
+                                        onClick={() => !actionLoading[`restart-${selectedEnv}`] && handleAction('restart')}
                                         onMouseEnter={(e) => {
-                                            e.target.style.background = '#FFA726';
+                                            if (!actionLoading[`restart-${selectedEnv}`]) e.target.style.background = '#FFA726';
                                         }}
                                         onMouseLeave={(e) => {
                                             e.target.style.background = 'transparent';
                                         }}
                                     >
-                                        Restart
+                                        {actionLoading[`restart-${selectedEnv}`] ? 'Restarting...' : 'Restart'}
                                     </button>
                                 )}
                             </div>
@@ -659,20 +656,14 @@ const ProjectDetailsPage = () => {
             )}
 
             {/* Job Logs Modal */}
-            {jobLogsModal.visible && (
-                <JobLogsModal
-                    jobId={jobLogsModal.jobId}
-                    jobInfo={jobLogsModal.jobInfo}
-                    onClose={() => {
-                        console.log('JobLogsModal closing');
-                        setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
-                        loadDetails(); // Refresh data after action
-                    }}
-                />
-            )}
-
-            {/* Debug: Show modal state */}
-            {console.log('Current jobLogsModal state:', jobLogsModal)}
+            <JobLogsModal
+                visible={jobLogsModal.visible}
+                jobId={jobLogsModal.jobId}
+                jobInfo={jobLogsModal.jobInfo}
+                onClose={() => {
+                    setJobLogsModal({ visible: false, jobId: null, jobInfo: null });
+                }}
+            />
 
             {/* Confirm Dialog */}
             {confirmDialog.visible && (
