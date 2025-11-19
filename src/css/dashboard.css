@@ -57,6 +57,19 @@
     border-radius: 12px;
 }
 
+/* Real-time connection pulse animation */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(51, 219, 41, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(51, 219, 41, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(51, 219, 41, 0);
+    }
+}
+
 @media screen and (max-width: 768px) {
     .apiDetailsCardWrapper {
         display: flex;

@@ -139,6 +139,7 @@ const Dashboard = () => {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [message, setMessage] = useState('');
     const [showLoader, setShowLoader] = useState(false);
+    const [realtimeConnected, setRealtimeConnected] = useState(false);
 
 
     // Data loading effect with explicit loader so Loader can be shown
@@ -158,6 +159,87 @@ const Dashboard = () => {
             });
         }
     }, [reload, userId])
+
+    // Real-time updates via Server-Sent Events
+    useEffect(() => {
+        if (!userId) return;
+
+        // Get token from authData in localStorage
+        const authData = JSON.parse(localStorage.getItem('authData') || '{}');
+        const token = authData?.token;
+
+        if (!token) return;
+
+        const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5050';
+        const url = `${API_BASE}/checks/stream?token=${token}`;
+
+        const eventSource = new EventSource(url);
+
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+
+        eventSource.onopen = () => {
+            setRealtimeConnected(true);
+            reconnectAttempts = 0;
+        };
+
+        eventSource.addEventListener('ready', (event) => {
+            // Connection established
+        });
+
+        eventSource.addEventListener('checkUpdate', (event) => {
+            try {
+                const update = JSON.parse(event.data);
+
+                // Update the check in allApiChecks array
+                setAllApiChecks(prevChecks => {
+                    const updatedChecks = prevChecks.map(check => {
+                        if (check._id === update.checkId) {
+                            return {
+                                ...check,
+                                state: update.state,
+                                responseTime: update.responseTime,
+                                lastChecked: update.lastChecked,
+                                isActive: update.isActive,
+                                failureStreak: update.failureStreak,
+                                successStreak: update.successStreak,
+                                sslLastCertExpiryAt: update.sslLastCertExpiryAt,
+                                sslChainValid: update.sslChainValid
+                            };
+                        }
+                        return check;
+                    });
+
+                    // Update filtered checks based on current filters
+                    updateFilteredDataOnStatus(selectedGroup, selectedStatus, updatedChecks);
+
+                    return updatedChecks;
+                });
+            } catch (err) {
+                // Ignore parsing errors
+            }
+        });
+
+        eventSource.onerror = (error) => {
+            setRealtimeConnected(false);
+
+            if (eventSource.readyState === EventSource.CLOSED) {
+                reconnectAttempts++;
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                    setTimeout(() => {
+                        // Trigger reload to re-establish connection
+                        setReload(r => !r);
+                    }, delay);
+                }
+            }
+        };
+
+        return () => {
+            eventSource.close();
+            setRealtimeConnected(false);
+        };
+    }, [userId, selectedGroup, selectedStatus]);
 
 
     // Optional: polling refresh every 60s unless the Add modal is open
@@ -351,8 +433,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', paddingRight: '15px' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginBottom: '15px' }}>
+            <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', paddingRight: '15px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginBottom: '15px', alignItems: 'center' }}>
                     <div
                         style={styles.blueButton}
                         onClick={() => setAddNewApiModalVisualize(true)}
@@ -407,6 +489,30 @@ const Dashboard = () => {
                         style={styles.searchIcon}
                         alt="search"
                     />
+                </div>
+            </div>
+
+
+            <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', paddingRight: '15px' }}>
+                {/* Real-time connection status indicator */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    background: realtimeConnected ? 'rgba(51, 219, 41, 0.1)' : 'rgba(245, 45, 45, 0.1)',
+                    borderRadius: '5px',
+                    fontSize: '12px',
+                    fontWeight: 300
+                }}>
+                    <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: realtimeConnected ? '#33DB29' : '#F52D2D',
+                        animation: realtimeConnected ? 'pulse 2s infinite' : 'none'
+                    }} />
+                    {realtimeConnected ? 'Live Updates' : 'Reconnecting...'}
                 </div>
             </div>
 

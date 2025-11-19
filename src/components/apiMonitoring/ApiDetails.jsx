@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { getAllChecks } from '../../api/apiChecks/GET';
 import getHealthLogs from '../../api/health/GET';
+import { getSSLDetails, updateSSLRenewalAlert } from '../../api/sslDetails/GET';
 import Loader from '../common/loader/Loader';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
@@ -82,6 +83,10 @@ const ApiDetails = () => {
     const [minutes, setMinutes] = useState(60);
     // Toggle for showing the recent status badge list
     const [showStatus, setShowStatus] = useState(false);
+    // SSL details state
+    const [sslDetails, setSSLDetails] = useState(null);
+    const [loadingSSL, setLoadingSSL] = useState(false);
+    const [expandedSSL, setExpandedSSL] = useState(false);
 
     // Data loading (react-query) and loader mapping
     const stateCheck = location?.state?.check || null; // If navigated from Dashboard, we may already have the check
@@ -152,6 +157,53 @@ const ApiDetails = () => {
         return Math.floor(ms / (1000 * 60 * 60 * 24));
     }, [sslExpiryAtMs]);
     const sslThresholds = Array.isArray(check?.sslAlertThresholdsSent) ? [...check.sslAlertThresholdsSent].sort((a, b) => a - b) : [];
+
+    // Fetch detailed SSL information for HTTPS checks
+    useEffect(() => {
+        // First, populate from the check object if we don't have sslDetails yet
+        if (check?.protocol === 'https' && check?._id && expandedSSL && !sslDetails) {
+            // If check already has SSL data, use it directly
+            if (check.sslCertDetails) {
+                setSSLDetails({
+                    sslExpiryAlerts: check.sslExpiryAlerts,
+                    sslLastCertExpiryAt: check.sslLastCertExpiryAt,
+                    sslLastCheckedAt: check.sslLastCheckedAt,
+                    sslCertDetails: check.sslCertDetails,
+                    sslChainValid: check.sslChainValid,
+                    sslChainLength: check.sslChainLength,
+                    sslAutoRenewalEnabled: check.sslAutoRenewalEnabled,
+                    sslLastRenewalDetectedAt: check.sslLastRenewalDetectedAt,
+                    sslAlertThresholdsSent: check.sslAlertThresholdsSent
+                });
+            } else {
+                // Otherwise fetch from API
+                setLoadingSSL(true);
+                getSSLDetails(check._id).then(response => {
+                    setLoadingSSL(false);
+                    if (response[0]) {
+                        setSSLDetails(response[1]);
+                    } else {
+                        // Set empty object to prevent infinite loop
+                        setSSLDetails({});
+                    }
+                }).catch(error => {
+                    setLoadingSSL(false);
+                    setSSLDetails({});
+                });
+            }
+        }
+    }, [check, expandedSSL, sslDetails]);
+
+    const handleSSLRenewalToggle = async (enabled) => {
+        if (!check?._id) return;
+        const response = await updateSSLRenewalAlert(check._id, enabled);
+        if (response[0]) {
+            // Refresh SSL details
+            setSSLDetails(prev => ({...prev, sslAutoRenewalEnabled: enabled}));
+        } else {
+            alert('Failed to update SSL renewal alert: ' + response[1]);
+        }
+    };
 
     // Render
     return (
@@ -257,35 +309,192 @@ const ApiDetails = () => {
 
             {/* SSL/TLS Certificate (HTTPS only) */}
             {check?.protocol === 'https' && (
-                <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px', display: 'grid', gridTemplateColumns: '220px 1fr', gap: 12 }}>
-                    <div style={{ fontWeight: 600, gridColumn: '1 / span 2', marginBottom: 6 }}>SSL/TLS Certificate</div>
-
-                    <div style={{ opacity: 0.8 }}>Expiry alerts</div>
-                    <div>{sslEnabled ? 'Enabled (per Settings)' : 'Disabled'}</div>
-
-                    <div style={{ opacity: 0.8 }}>Cert expiry</div>
-                    <div>
-                        {sslExpiryAtMs ? new Date(sslExpiryAtMs).toLocaleString() : '—'}
-                        {typeof daysLeft === 'number' && (
-                            <span className="stat-chip" style={{ marginLeft: 8 }}>
-                                <span className={`dot ${daysLeft <= 7 ? 'bad' : daysLeft <= 30 ? 'warn' : 'good'}`}></span>
-                                {daysLeft} day{Math.abs(daysLeft) === 1 ? '' : 's'} left
-                            </span>
-                        )}
+                <div className="api-details-card" style={{ background: '#1E1F2600', padding: '15px 20px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <div style={{ fontWeight: 600 }}>SSL/TLS Certificate</div>
+                        <button 
+                            onClick={() => setExpandedSSL(!expandedSSL)}
+                            style={{ 
+                                background: '#4545E6', 
+                                border: 'none', 
+                                color: 'white', 
+                                padding: '4px 12px', 
+                                borderRadius: '5px', 
+                                cursor: 'pointer',
+                                fontSize: '12px'
+                            }}
+                        >
+                            {expandedSSL ? 'Hide Details' : 'Show Details'}
+                        </button>
                     </div>
 
-                    <div style={{ opacity: 0.8 }}>Last SSL check</div>
-                    <div>{sslLastCheckedAtMs ? new Date(sslLastCheckedAtMs).toLocaleString() : '—'}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 12 }}>
+                        <div style={{ opacity: 0.8 }}>Expiry alerts</div>
+                        <div>{sslEnabled ? 'Enabled (per Settings)' : 'Disabled'}</div>
 
-                    <div style={{ opacity: 0.8 }}>Alerts sent for thresholds</div>
-                    <div>
-                        {sslThresholds.length ? (
-                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                                {sslThresholds.map((d) => (
-                                    <span key={d} className="glass-badge" style={{ padding: '3px 8px', borderRadius: 8 }}>{d}d</span>
-                                ))}
-                            </div>
-                        ) : '—'}
+                        <div style={{ opacity: 0.8 }}>Cert expiry</div>
+                        <div>
+                            {sslExpiryAtMs ? new Date(sslExpiryAtMs).toLocaleString() : '—'}
+                            {typeof daysLeft === 'number' && (
+                                <span className="stat-chip" style={{ marginLeft: 8 }}>
+                                    <span className={`dot ${daysLeft <= 7 ? 'bad' : daysLeft <= 30 ? 'warn' : 'good'}`}></span>
+                                    {daysLeft} day{Math.abs(daysLeft) === 1 ? '' : 's'} left
+                                </span>
+                            )}
+                        </div>
+
+                        <div style={{ opacity: 0.8 }}>Last SSL check</div>
+                        <div>{sslLastCheckedAtMs ? new Date(sslLastCheckedAtMs).toLocaleString() : '—'}</div>
+
+                        <div style={{ opacity: 0.8 }}>Alerts sent for thresholds</div>
+                        <div>
+                            {sslThresholds.length ? (
+                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                    {sslThresholds.map((d) => (
+                                        <span key={d} className="glass-badge" style={{ padding: '3px 8px', borderRadius: 8 }}>{d}d</span>
+                                    ))}
+                                </div>
+                            ) : '—'}
+                        </div>
+
+                        {/* Expanded SSL Details */}
+                        {expandedSSL && (
+                            <>
+                                {loadingSSL && (
+                                    <div style={{ gridColumn: '1 / span 2', textAlign: 'center', padding: '20px', opacity: 0.7 }}>
+                                        Loading SSL details...
+                                    </div>
+                                )}
+                                
+                                {!loadingSSL && sslDetails && (
+                                    <>
+                                        {/* Chain Validation Status */}
+                                        {typeof sslDetails.sslChainValid === 'boolean' && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>Chain validation</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span className={`dot ${sslDetails.sslChainValid ? 'good' : 'bad'}`}></span>
+                                                    {sslDetails.sslChainValid ? 'Valid' : 'Invalid'}
+                                                    {sslDetails.sslChainLength && (
+                                                        <span style={{ opacity: 0.7 }}>({sslDetails.sslChainLength} certificates)</span>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Certificate Issuer */}
+                                        {sslDetails.sslCertDetails?.issuer && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>Issued by</div>
+                                                <div>
+                                                    <div>{sslDetails.sslCertDetails.issuer.CN || sslDetails.sslCertDetails.issuer.O || 'Unknown'}</div>
+                                                    {sslDetails.sslCertDetails.issuer.O && sslDetails.sslCertDetails.issuer.O !== sslDetails.sslCertDetails.issuer.CN && (
+                                                        <div style={{ fontSize: '11px', opacity: 0.7 }}>{sslDetails.sslCertDetails.issuer.O}</div>
+                                                    )}
+                                                    {sslDetails.sslCertDetails.issuer.C && (
+                                                        <div style={{ fontSize: '11px', opacity: 0.7 }}>Country: {sslDetails.sslCertDetails.issuer.C}</div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Certificate Subject */}
+                                        {sslDetails.sslCertDetails?.subject && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>Issued to</div>
+                                                <div>
+                                                    {sslDetails.sslCertDetails.subject.CN || sslDetails.sslCertDetails.subject.O || 'Unknown'}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Subject Alternative Names */}
+                                        {sslDetails.sslCertDetails?.subjectaltname && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>SANs</div>
+                                                <div style={{ fontSize: '12px', opacity: 0.9 }}>
+                                                    {sslDetails.sslCertDetails.subjectaltname}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Valid From/To */}
+                                        {sslDetails.sslCertDetails?.validFrom && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>Valid from</div>
+                                                <div>{new Date(sslDetails.sslCertDetails.validFrom).toLocaleString()}</div>
+                                            </>
+                                        )}
+
+                                        {/* Certificate Fingerprints */}
+                                        {(sslDetails.sslCertDetails?.fingerprint256 || sslDetails.sslCertDetails?.fingerprint) && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>Fingerprint (SHA256)</div>
+                                                <div style={{ fontSize: '11px', fontFamily: 'monospace', opacity: 0.8, wordBreak: 'break-all' }}>
+                                                    {sslDetails.sslCertDetails.fingerprint256 || sslDetails.sslCertDetails.fingerprint || '—'}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Certificate Chain */}
+                                        {sslDetails.sslCertDetails?.chain && sslDetails.sslCertDetails.chain.length > 0 && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>Certificate chain</div>
+                                                <div>
+                                                    {sslDetails.sslCertDetails.chain.map((cert, idx) => (
+                                                        <div key={idx} style={{ 
+                                                            padding: '6px 10px', 
+                                                            marginBottom: '4px', 
+                                                            background: 'rgba(255,255,255,0.03)', 
+                                                            borderRadius: '5px',
+                                                            borderLeft: cert.isSelfSigned ? '3px solid #33DB29' : '3px solid #4545E6'
+                                                        }}>
+                                                            <div style={{ fontSize: '12px', fontWeight: 500 }}>
+                                                                {idx === 0 ? '🔐 ' : idx === sslDetails.sslCertDetails.chain.length - 1 ? '🏛️ ' : '📜 '}
+                                                                {cert.subject}
+                                                            </div>
+                                                            <div style={{ fontSize: '10px', opacity: 0.7 }}>
+                                                                Issued by: {cert.issuer}
+                                                                {cert.isSelfSigned && <span style={{ marginLeft: 8, color: '#33DB29' }}>(Root CA)</span>}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {/* Auto-Renewal Alerts */}
+                                        <div style={{ opacity: 0.8 }}>Auto-renewal alerts</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox"
+                                                    checked={sslDetails.sslAutoRenewalEnabled || false}
+                                                    onChange={(e) => handleSSLRenewalToggle(e.target.checked)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                                <span>{sslDetails.sslAutoRenewalEnabled ? 'Enabled' : 'Disabled'}</span>
+                                            </label>
+                                            {sslDetails.sslLastRenewalDetectedAt && (
+                                                <span style={{ fontSize: '11px', opacity: 0.7 }}>
+                                                    (Last renewal: {new Date(sslDetails.sslLastRenewalDetectedAt).toLocaleDateString()})
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Serial Number */}
+                                        {sslDetails.sslCertDetails?.serialNumber && (
+                                            <>
+                                                <div style={{ opacity: 0.8 }}>Serial number</div>
+                                                <div style={{ fontSize: '11px', fontFamily: 'monospace', opacity: 0.8 }}>
+                                                    {sslDetails.sslCertDetails.serialNumber}
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
             )}
