@@ -5,6 +5,13 @@
 
 .apiCheckUrl {
     width: 30%;
+    min-width: 0; /* Required for flex children to shrink */
+}
+
+.apiCheckUrl > div:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .apiCheckContent {
