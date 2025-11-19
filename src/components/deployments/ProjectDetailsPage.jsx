@@ -85,15 +85,17 @@ const ProjectDetailsPage = () => {
     };
 
     const getStatusBadge = (status) => {
+        const statusLower = status?.toLowerCase();
         const colors = {
             success: '#4CAF50',
             failed: '#EF5350',
             running: '#FFA726',
-            pending: '#42A5F5'
+            pending: '#42A5F5',
+            dispatched: '#9C27B0'
         };
         return (
             <span style={{
-                background: colors[status] || '#666',
+                background: colors[statusLower] || '#666',
                 padding: '2px 8px',
                 borderRadius: '4px',
                 fontSize: '11px',
@@ -565,7 +567,7 @@ const ProjectDetailsPage = () => {
                                     <tbody>
                                         {data.deploymentHistory.map((job, idx) => (
                                             <tr key={idx}>
-                                                <td style={styles.tableCell}>{job.environment?.toUpperCase()}</td>
+                                                <td style={styles.tableCell}>{(job.payload?.environment || 'N/A').toUpperCase()}</td>
                                                 <td style={styles.tableCell}>{job.type}</td>
                                                 <td style={styles.tableCell}>{getStatusBadge(job.status)}</td>
                                                 <td style={styles.tableCell}>{formatDate(job.createdAt)}</td>
